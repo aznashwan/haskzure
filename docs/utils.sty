@@ -1,0 +1,22 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{utils}[2016/01/20 Special macros used in the Haskzure paper.]
+
+\RequirePackage{minted}
+
+\usemintedstyle{monokai}
+
+% general environment to be used for code under 'haskellcode'.
+\newminted{haskell}{frame=lines, linenos}
+
+% wrapper env that keeps track of each listing;
+% should be preffered over the above.
+%\newcounter{haskellcount}[section]
+%\newenvironment{haskell}[1]{\refstepcounter{haskellcount}
+%\begin{listing}
+%\begin{haskellcode}
+%}
+%{\end{haskellcode}
+%\caption{##1}
+%\label{\thehaskellcount}
+%\end{listing}
+%}
