@@ -80,7 +80,8 @@ instance (FromJSON a) => FromJSON (Resource a) where
 
 -- ToJSON instance for Resource:
 instance (ToJSON a) => ToJSON (Resource a) where
-    toJSON (Resource iD name location typ props) = object ["id" .= iD,
+    toJSON (Resource iD name location typ props) = object [
+            "id" .= iD,
             "name" .= name,
             "location" .= location,
             "type" .= typ,

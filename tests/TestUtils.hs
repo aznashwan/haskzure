@@ -15,6 +15,11 @@ import           Test.QuickCheck (Arbitrary (..), Gen, Property, collect,
                                   frequency, sized)
 
 
+-- | And one for Texts:
+instance Arbitrary Text where
+    arbitrary = pack <$> (arbitrary :: Gen String)
+
+
 -- | A naive Arbitrary instance for Aeson.Value:
 instance Arbitrary Aeson.Value where
   arbitrary = frequency [

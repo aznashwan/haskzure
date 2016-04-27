@@ -32,22 +32,21 @@ import           Data.Text  (Text)
 -- | AzureResource is the typeclass to which all AzureResource
 -- resource datatypes must comply in order to be deployed.
 -- It should be directly serializable to/from JSON.
--- | AzureResource's
 class (ToJSON a, FromJSON a) => AzureResource r a | r -> a where
   -- | rID returns the Text ID of the AzureResource:
-  rID :: r -- ^ the AzureResource instance.
+  rID :: r    -- ^ the AzureResource instance.
       -> Text -- ^ the String ID of the AzureResource.
 
   -- | rName returns the Text name of the AzureResource:
-  rName :: r -- ^ the AzureResource instance.
+  rName :: r    -- ^ the AzureResource instance.
         -> Text -- ^ the String name of the AzureResource as present on Azure.
 
   -- | rLocation returns the normalized String location of the AzureResource:
-  rLocation :: r -- ^ the AzureResource instance.
+  rLocation :: r    -- ^ the AzureResource instance.
             -> Text -- ^ the String location of the AzureResource.
 
   -- | rType returns the String Type of the AzureResource in 'Provider/ResourceType' form:
-  rType :: r -- ^ the AzureResource instance.
+  rType :: r    -- ^ the AzureResource instance.
         -> Text -- ^ the String type of the AzureResource as present on Azure.
 
   -- | rProperties returns the set of properties specific to this AzureResource:

@@ -26,9 +26,6 @@ instance Arbitrary (Resource Value) where
         (arbitrary :: Gen Text) <*>
         (arbitrary ::  Gen Value)
 
--- | And one for Texts:
-instance Arbitrary Text where
-    arbitrary = pack <$> (arbitrary :: Gen String)
 
 -- | prop_ResourceEncodeDecodeIdempotence tests encode/decode
 -- impotence on Resources.

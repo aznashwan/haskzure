@@ -28,7 +28,7 @@ import           Data.Text.Encoding (decodeUtf8, encodeUtf8)
 -- sad yet necessary orphan instances:
 
 
--- Naive n' orphaned instances for ToJSON and FromJSON for ByteStrings...
+-- Naive and orphaned instances for ToJSON and FromJSON for ByteStrings...
 instance FromJSON ByteString where
     parseJSON (Aes.String t) = return $ encodeUtf8 t
     parseJSON _ = fail "ByteString must be decoded from String"
