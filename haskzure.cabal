@@ -25,18 +25,20 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     Haskzure.Core, Haskzure.Core.AzureResource, Haskzure.Core.Resource,
-                       Haskzure.Core.Utils
+                       Haskzure.Core.Utils, Haskzure.Gen.Instances,
+                       Haskzure.Gen.Utils
   -- other-modules:       
   other-extensions:    MultiParamTypeClasses, FlexibleInstances, FunctionalDependencies, OverloadedStrings
+                       TemplateHaskell, QuasiQuotes
   ghc-options:         -Wall
-  build-depends:       base >=4.8 && <4.9, aeson, data-default, bytestring,
-                       text, word8
+  build-depends:       base >= 4.9, aeson, data-default, bytestring,
+                       text, word8, template-haskell, unordered-containers
   hs-source-dirs:      ., Haskzure
   default-language:    Haskell2010
 
 Test-Suite test
   type:                exitcode-stdio-1.0
-  build-depends:       aeson, base >=4.8 && <4.9, bytestring, QuickCheck, text,
+  build-depends:       aeson, base >= 4.9, bytestring, QuickCheck, text,
                        vector, haskzure, word8
   hs-source-dirs:      tests
   main-is:             Main.hs

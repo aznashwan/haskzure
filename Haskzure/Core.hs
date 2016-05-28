@@ -16,5 +16,4 @@ module Haskzure.Core (
 
 import           Haskzure.Core.Resource (AzureResource (..), Resource (..))
 
-
 -- | Core contains the core components of the project.
