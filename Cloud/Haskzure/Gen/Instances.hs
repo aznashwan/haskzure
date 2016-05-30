@@ -1,4 +1,5 @@
 {-# OPTIONS_HADDOCK prune, show-extensions #-}
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
@@ -101,14 +102,20 @@ monoidInst name =
             mappend = mappenddefault
       |]
 
--- NOTE: these instances are pretty shameful.
--- The Lift instance is for some reason gone from TH, however the Show one is
--- just a result of the slight mismatches occuring between the old Generics
--- part of Aeson and the new TH scheme...
+
+-- | 'Data.Monoid.Monoid' instance for 'Int' mostly used for 'mempty'.
+instance Monoid Int where
+    mempty = 0
+    mappend = (+)
+
+
+#if MIN_VERSION_template_haskell(2,11,0)
+-- | NOTE: these instances are pretty shameful.
+-- The Lift instance is for some reason gone from TH...
+-- The IsString though is just a pathetic attempt to mediate the bright
+-- idea of using OverloadedStrings and template-haskell together...
 instance Lift Name where
     lift (Name (OccName s) _) = return (LitE (StringL s))
 instance IsString Name where
     fromString = mkName
-instance Monoid Int where
-    mempty = 0
-    mappend = (+)
+#endif

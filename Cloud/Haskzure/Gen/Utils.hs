@@ -7,6 +7,7 @@ module Cloud.Haskzure.Gen.Utils (
     mkToJSONPairs,
     mkFromJSONPairs,
     mkEncodingOptions,
+    recordFieldsInfo,
     mkDecodingOptions,
     withDefaults
     ) where
@@ -16,7 +17,12 @@ import           Control.Applicative        (empty)
 import           Data.Char                  (toLower, toUpper)
 import           Data.Monoid                ((<>))
 import           Language.Haskell.TH
-import           Language.Haskell.TH.Syntax (VarBangType, mkName, showName)
+import           Language.Haskell.TH.Syntax (mkName, showName)
+#if MIN_VERSION_template_haskell(2,11,0)
+import           Language.Haskell.TH.Syntax (VarBangType)
+#else
+import           Language.Haskell.TH.Syntax (VarStrictType)
+#endif
 
 import           Data.Aeson                 (Value (..), object, (.=))
 import           Data.Aeson.Types           (Options (..), Pair, Parser,
@@ -47,8 +53,8 @@ mkFromJSONPairs typ = do
 -- Ex: getMemptyExp "Type" -> (mempty :: Type)
 getMemptyExp :: Type -> Q Exp
 getMemptyExp t = do
-    Just op <- lookupValueName "mempty"
-    return $ SigE (VarE op) t
+    op <- [| mempty |]
+    return $ SigE op t
 
 -- | Returns the 'Exp' associated to an Aeson ToJSON .= operation for the 'Name'
 -- of a given record field.
@@ -69,19 +75,24 @@ mkToJSONPairs typ = do
     return $ ListE decs
 
 -- | Rifies the simple type given by 'Name' and returns the result of applying
--- the given 'VarTypeBang'-applyable function to all the found records.
--- This function makes hard presumptions about the provided type Name.
--- Particularly, it expects it to be a datatype with a single value constructor
--- which is of record type.
+-- the given 'VarTypeBang' (or 'VarStrictType' in template-haskell <= 2.11.0)
+-- -applicable function to all the found records. This function makes hard presumptions
+-- about the provided type 'Name'. Particularly, it expects it to be a datatype
+-- with a single value constructor which is of record type.
+#if MIN_VERSION_template_haskell(2,11,0)
 recordFieldsInfo :: (VarBangType -> a) -> Name -> Q [a]
 recordFieldsInfo f name = do
-#if __GLASGOW_HASKELL__ >= 800
+    -- additional (Maybe Kind) in DataD (4th position):
     TyConI (DataD _ _ _ _ [RecC _ vbts] _) <- reify name
+    return $ map f vbts
 #else
+-- 'VarBangType' used to be called 'VarStrictType'.
+recordFieldsInfo :: (VarStrictType -> a) -> Name -> Q [a]
+recordFieldsInfo f name = do
     TyConI (DataD _ _ _ [RecC _ vbts] _) <- reify name
+    return $ map f vbts
 #endif
 
-    return $ map f vbts
 
 -- | Makes set of Aeson 'Options' for encoding datatypes.
 mkEncodingOptions :: Name -> Options
