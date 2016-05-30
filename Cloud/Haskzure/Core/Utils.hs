@@ -14,7 +14,7 @@ Portability : POSIX, Win32
 Utils defines some useful utilities as well as some
 sad yet necessary orphan instances:
 -}
-module Haskzure.Core.Utils (
+module Cloud.Haskzure.Core.Utils (
         )where
 
 import           Data.Aeson         (FromJSON (..), ToJSON (..))

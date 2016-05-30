@@ -6,7 +6,7 @@ description:
             Haskzure is a library containing bindings and abstractions for making use
             of the Azure Resource Manager REST APIs.
             .
-            -- Uses of Haskzure...
+            -- Uses of Haskzure
             .
             Haskzure consists of two modules: Core, which contains the core part of
             the project, alongside a Prelude containing useful constructs for use of the
@@ -16,7 +16,7 @@ homepage:            https://github.com/aznashwan/haskzure
 license:             Apache-2.0
 license-file:        LICENSE
 author:              Nashwan Azhari
-maintainer:          nazhari@cloudbasesolutions.com
+maintainer:          aznashwan@yahoo.com
 -- copyright:           
 category:            Cloud
 build-type:          Simple
@@ -24,24 +24,25 @@ extra-source-files:  README.md
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     Haskzure.Core, Haskzure.Core.AzureResource, Haskzure.Core.Resource,
-                       Haskzure.Core.Utils, Haskzure.Gen.Instances,
-                       Haskzure.Gen.Utils
-  -- other-modules:       
+  exposed-modules:     Cloud.Haskzure.Core, Cloud.Haskzure.Core.AzureResource, Cloud.Haskzure.Core.Resource,
+                       Cloud.Haskzure.Gen.Instances, Cloud.Haskzure.Gen.Utils, Cloud.Haskzure.Core.Auth
+  other-modules:       Cloud.Haskzure.Core.Utils
   other-extensions:    MultiParamTypeClasses, FlexibleInstances, FunctionalDependencies, OverloadedStrings
                        TemplateHaskell, QuasiQuotes
   ghc-options:         -Wall
-  build-depends:       base >= 4.9, aeson, data-default, bytestring,
-                       text, word8, template-haskell, unordered-containers
-  hs-source-dirs:      ., Haskzure
+  build-depends:       base < 5.0, aeson, data-default, bytestring, generic-deriving,
+                       text, word8, template-haskell, containers, http-client, http-client-tls
+  if impl(ghc <= 8.0)
+    -- provide/emulate `Control.Monad.Fail` and `Data.Semigroups` API for -- pre-GHC8
+    build-depends: fail == 4.9.*, semigroups == 0.18.*
   default-language:    Haskell2010
 
 Test-Suite test
   type:                exitcode-stdio-1.0
-  build-depends:       aeson, base >= 4.9, bytestring, QuickCheck, text,
-                       vector, haskzure, word8
+  build-depends:       aeson, base < 5.0, bytestring, QuickCheck, text,
+                       vector, haskzure, word8, template-haskell
   hs-source-dirs:      tests
   main-is:             Main.hs
-  other-modules:       ResourceTests, TestUtils
+  other-modules:       TestResource, TestUtils, TestInstances
   default-language:    Haskell2010
   other-extensions:    OverloadedStrings, FlexibleInstances

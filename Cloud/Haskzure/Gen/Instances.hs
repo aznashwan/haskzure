@@ -3,11 +3,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
-module Haskzure.Gen.Instances (
+module Cloud.Haskzure.Gen.Instances (
     toJSONInst,
-    fromJSONInst
+    fromJSONInst,
+    monoidInst
     )where
 
+import           Data.Monoid                (Monoid (..))
 import           Data.String                (IsString (..))
 import           Language.Haskell.TH        (Dec, Q, conT, mkName)
 import           Language.Haskell.TH.Syntax (Exp (..), Lift (lift), Lit (..),
@@ -17,8 +19,9 @@ import           Data.Aeson                 (FromJSON (..), ToJSON (..), Value,
                                              genericParseJSON,
                                              genericToEncoding)
 import           Data.Aeson.Types           (Parser)
+import           Generics.Deriving.Monoid   (mappenddefault, memptydefault)
 
-import           Haskzure.Gen.Utils
+import           Cloud.Haskzure.Gen.Utils
 
 
 -- | Generates a 'ToJSON' instance provided a datatype given by its 'Name'.
@@ -85,6 +88,19 @@ fromJSONInst name =
                 ) :: Value -> Parser $( conT name )
       |]
 
+
+-- | Generates a 'Data.Monoid.Monoid' instance for the datatype with the
+-- provided 'Name'.
+--
+-- The datatype MUST be an instance of 'GHC.Generics.Generic', with the type of
+-- all of its contained felds also 'Data.Monoid.Monoid' instances themselves.
+monoidInst :: Name -> Q [Dec]
+monoidInst name =
+    [d| instance Monoid $( conT name ) where
+            mempty = memptydefault
+            mappend = mappenddefault
+      |]
+
 -- NOTE: these instances are pretty shameful.
 -- The Lift instance is for some reason gone from TH, however the Show one is
 -- just a result of the slight mismatches occuring between the old Generics
@@ -93,3 +109,6 @@ instance Lift Name where
     lift (Name (OccName s) _) = return (LitE (StringL s))
 instance IsString Name where
     fromString = mkName
+instance Monoid Int where
+    mempty = 0
+    mappend = (+)

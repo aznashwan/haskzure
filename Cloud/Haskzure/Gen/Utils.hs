@@ -1,8 +1,9 @@
 {-# OPTIONS_HADDOCK prune, show-extensions #-}
 {-# LANGUAGE CPP               #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
-module Haskzure.Gen.Utils (
+module Cloud.Haskzure.Gen.Utils (
     mkToJSONPairs,
     mkFromJSONPairs,
     mkEncodingOptions,
@@ -17,7 +18,7 @@ import           Data.Monoid                ((<>))
 import           Language.Haskell.TH
 import           Language.Haskell.TH.Syntax (VarBangType, mkName, showName)
 
-import           Data.Aeson                 (Value (..), object)
+import           Data.Aeson                 (Value (..), object, (.=))
 import           Data.Aeson.Types           (Options (..), Pair, Parser,
                                              defaultTaggedObject)
 
@@ -33,12 +34,12 @@ import           Data.Aeson.Types           (Options (..), Pair, Parser,
 -- ex: mkFromJSONPairs 'TestData -> ["field1" .= (mempty :: String) ...]
 mkFromJSONPairs :: Name -> Q Exp
 mkFromJSONPairs typ = do
-    -- Just op <- lookupValueName ".="
+    op <- [| (.=) |]
     records <- recordFieldsInfo (\(n,_,t) -> (n,t)) typ
 
     memptys <- mapM (getMemptyExp . snd) records
     let labels = map ((mkFieldLabelPrefixRemoveModifier typ) . showName . fst) records
-    let zipf f m = InfixE (Just (LitE (StringL f))) (VarE (mkName ".=")) (Just m)
+    let zipf f m = InfixE (Just (LitE (StringL f))) op (Just m)
 
     return $ ListE $ zipWith zipf labels memptys
 
@@ -53,10 +54,10 @@ getMemptyExp t = do
 -- of a given record field.
 mkToJSONexp :: String -> Name -> Q Exp
 mkToJSONexp jsonName vName = do
-    Just op <- lookupValueName ".="
+    op <- [| (.=) |]
     return $ InfixE
                 (Just (LitE (StringL jsonName)))
-                (VarE op)
+                op
                 (Just (VarE vName))
 
 -- | Returns the list of 'Exp's associated to all the record fields for the

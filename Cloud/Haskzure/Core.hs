@@ -9,11 +9,12 @@ Portability : POSIX, Win32
 
 Core contains the core components of the project.
 -}
-module Haskzure.Core (
+module Cloud.Haskzure.Core (
   AzureResource(..),
   Resource(..),
   ) where
 
-import           Haskzure.Core.Resource (AzureResource (..), Resource (..))
+import           Cloud.Haskzure.Core.Resource (AzureResource (..),
+                                               Resource (..))
 
 -- | Core contains the core components of the project.

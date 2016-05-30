@@ -16,20 +16,21 @@ Portability : POSIX, Win32
 Resource defines the core Resource ATD which will be used to model
 Azure resources. Resource is an instance of AzureResource.
 -}
-module Haskzure.Core.Resource (
+module Cloud.Haskzure.Core.Resource (
   AzureResource(..),
   Resource(..),
   def
   )where
 
 
-import           Data.Aeson                  (FromJSON (..), ToJSON (..),
-                                              Value (..), object, (.:), (.=))
-import           Data.Default                (Default, def)
-import           Data.Text                   (Text)
+import           Data.Aeson                        (FromJSON (..), ToJSON (..),
+                                                    Value (..), object, (.:),
+                                                    (.=))
+import           Data.Default                      (Default, def)
+import           Data.Text                         (Text)
 
-import           Haskzure.Core.AzureResource (AzureResource (..))
-import           Haskzure.Core.Utils         ()
+import           Cloud.Haskzure.Core.AzureResource (AzureResource (..))
+import           Cloud.Haskzure.Core.Utils         ()
 
 
 -- | Resource defines the core Resource ATD which will be used

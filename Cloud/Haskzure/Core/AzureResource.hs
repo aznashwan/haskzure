@@ -16,7 +16,7 @@ Copyright   : (c) Nashwan Azhari, 2016
 This module contains the definition of  the AzureResource
 typeclass to which all Azure resource datatypes must comply.
 -}
-module Haskzure.Core.AzureResource (
+module Cloud.Haskzure.Core.AzureResource (
   AzureResource(..),
   )where
 
