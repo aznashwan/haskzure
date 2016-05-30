@@ -2,23 +2,17 @@
 module Main (main) where
 
 
-import           Test.QuickCheck (quickCheck)
+import           Test.QuickCheck (Testable (..), quickCheck)
 
-import           ResourceTests   (prop_ResourceEncodeDecodeIdempotence)
+import           TestInstances   (prop_AesonSymmetryNestedDatatype,
+                                  prop_AesonSymmetrySimpleDatatype)
+import           TestResource    (prop_ResourceEncodeDecodeIdempotence)
 import           TestUtils       (prop_aeson)
-
--- simpleTest is just a list of simple Tests:
-simpleTests = [
-    prop_aeson
-   ]
-
--- | the list of Resource Tests...
-resourceTests = [
-   prop_ResourceEncodeDecodeIdempotence
- ]
 
 
 main :: IO ()
 main = do
-    mapM_ quickCheck simpleTests
-    mapM_ quickCheck resourceTests
+    quickCheck prop_aeson
+    quickCheck prop_ResourceEncodeDecodeIdempotence
+    quickCheck prop_AesonSymmetrySimpleDatatype
+    quickCheck prop_AesonSymmetryNestedDatatype

@@ -1,20 +1,19 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE Trustworthy       #-}
 
 -- ResourceTests defines HUnit and QuickCheck tests for the functions
 -- and structures in the Haskzure.Core.Resource module.
-module ResourceTests(
+module TestResource(
     prop_ResourceEncodeDecodeIdempotence
   ) where
 
-import           Data.Aeson      (Value, decode, encode)
-import           Data.Text       (Text, pack)
-import           Test.QuickCheck (Arbitrary (..), Gen)
+import           Data.Aeson          (Value, decode, encode)
+import           Data.Text           (Text, pack)
+import           Test.QuickCheck     (Arbitrary (..), Gen)
 
-import           Haskzure.Core   (Resource (..))
+import           Cloud.Haskzure.Core (Resource (..))
 
-import           TestUtils       ()
+import           TestUtils           ()
 
 
 -- | And a naive Arbitrary instance for a Resource:

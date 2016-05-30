@@ -1,23 +1,48 @@
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 -- | TestUtils defines a set of general utilities to be used within testing.
 module TestUtils (
+  arbiInst,
   prop_aeson
   )where
 
 
-import           Control.Monad   (liftM, replicateM)
-import qualified Data.Text       as T
-import qualified Data.Vector     as V
+import           Control.Monad              (liftM, replicateM)
+import           Data.List                  (intersperse)
+import qualified Data.Text                  as T
+import qualified Data.Vector                as V
+import           Language.Haskell.TH        (Dec, Q, conE, conT, lookupTypeName,
+                                             mkName)
+import           Language.Haskell.TH.Syntax (Exp (..), Lift (..), Name (..),
+                                             Type (..), showName)
 
-import qualified Data.Aeson      as Aeson
-import           Test.QuickCheck (Arbitrary (..), Gen, Property, collect,
-                                  frequency, sized)
+import qualified Data.Aeson                 as Aeson
+import           Test.QuickCheck            (Arbitrary (..), Gen (..), Property,
+                                             collect, frequency, sized)
+
+import           Cloud.Haskzure.Gen.Utils   (recordFieldsInfo)
+
+
+arbiInst :: Name -> Q [Dec]
+arbiInst name = do
+    records <- recordFieldsInfo (\(n,_,t) -> (n,t)) name
+    arbi <- [| arbitrary |]
+    ap <- [| (<*>) |]
+    op <- [| (<$>) |]
+    let mkSigExp typ = (SigE arbi (AppT (ConT ''Gen) typ))
+    let foldf e1 = UInfixE e1 ap
+    let arbExps = foldl1 foldf $ map (mkSigExp . snd) records
+    let exp = UInfixE ((ConE . mkName . showName) name) op arbExps
+    [d| instance Arbitrary $( conT name ) where
+            arbitrary = $( return exp )
+      |]
 
 
 -- | And one for Texts:
-instance Arbitrary Text where
-    arbitrary = pack <$> (arbitrary :: Gen String)
+instance Arbitrary T.Text where
+    arbitrary = T.pack <$> (arbitrary :: Gen String)
 
 
 -- | A naive Arbitrary instance for Aeson.Value:
