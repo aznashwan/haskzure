@@ -17,25 +17,25 @@ license:             Apache-2.0
 license-file:        LICENSE
 author:              Nashwan Azhari
 maintainer:          aznashwan@yahoo.com
--- copyright:           
+copyright:           Nashwan Azhari (2016)
 category:            Cloud
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     Cloud.Haskzure.Core, Cloud.Haskzure.Core.AzureResource, Cloud.Haskzure.Core.Resource,
+  exposed-modules:     Cloud.Haskzure, Cloud.Haskzure.Core, Cloud.Haskzure.Gen
+  other-modules:       Cloud.Haskzure.Core.AzureResource, Cloud.Haskzure.Core.Resource,
                        Cloud.Haskzure.Gen.Instances, Cloud.Haskzure.Gen.Utils,
                        Cloud.Haskzure.Core.Auth, Cloud.Haskzure.Core.Utils
-  -- other-modules:       
   other-extensions:    MultiParamTypeClasses, FlexibleInstances, FunctionalDependencies, OverloadedStrings
                        TemplateHaskell, QuasiQuotes
   ghc-options:         -Wall
   build-depends:       base < 5.0, aeson, data-default, bytestring, generic-deriving,
                        text, word8, template-haskell, containers, http-client, http-client-tls
   if impl(ghc <= 8.0)
-    -- provide/emulate `Control.Monad.Fail` and `Data.Semigroups` API for -- pre-GHC8
-    build-depends: fail == 4.9.*, semigroups == 0.18.*
+    -- provide/emulate `Control.Monad.Fail` -- pre-GHC8
+    build-depends: fail == 4.9.*
   default-language:    Haskell2010
 
 Test-Suite test

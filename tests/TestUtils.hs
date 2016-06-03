@@ -22,7 +22,7 @@ import qualified Data.Aeson                 as Aeson
 import           Test.QuickCheck            (Arbitrary (..), Gen (..), Property,
                                              collect, frequency, sized)
 
-import           Cloud.Haskzure.Gen.Utils   (recordFieldsInfo)
+import           Cloud.Haskzure.Gen         (recordFieldsInfo)
 
 
 arbiInst :: Name -> Q [Dec]

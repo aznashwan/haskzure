@@ -1,5 +1,17 @@
-{-# OPTIONS_HADDOCK prune, show-extensions #-}
-{-# LANGUAGE CPP               #-}
+{-|
+ Module      : Instances
+ Description : Template Haskell instance generation functions
+ Copyright   : (c) Nashwan Azhari, 2016
+ License     : Apache 2.0
+ Maintainer  : aznashwan@yahoo.com
+ Stability   : experimental
+ Portability : POSIX, Win32
+
+ Defines a set of Template Haskell functions for generating various class
+ instances for simple data structures.
+-}
+
+{-# OPTIONS_HADDOCK show-extensions #-}
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
@@ -109,7 +121,6 @@ instance Monoid Int where
     mappend = (+)
 
 
-#if MIN_VERSION_template_haskell(2,11,0)
 -- | NOTE: these instances are pretty shameful.
 -- The Lift instance is for some reason gone from TH...
 -- The IsString though is just a pathetic attempt to mediate the bright
@@ -118,4 +129,3 @@ instance Lift Name where
     lift (Name (OccName s) _) = return (LitE (StringL s))
 instance IsString Name where
     fromString = mkName
-#endif

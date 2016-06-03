@@ -1,8 +1,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 
--- ResourceTests defines HUnit and QuickCheck tests for the functions
--- and structures in the Haskzure.Core.Resource module.
+-- ResourceTests defines QuickCheck tests for the functions
+-- and structures in the Cloud.Haskzure.Core.Resource module.
 module TestResource(
     prop_ResourceEncodeDecodeIdempotence
   ) where

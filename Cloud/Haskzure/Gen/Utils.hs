@@ -1,4 +1,16 @@
-{-# OPTIONS_HADDOCK prune, show-extensions #-}
+{-|
+ Module      : Cloud.Haskzure.Gen.Utils
+ Description : Template Haskell utilities for instance generation.
+ Copyright   : (c) Nashwan Azhari, 2016
+ License     : Apache 2.0
+ Maintainer  : aznashwan@yahoo.com
+ Stability   : experimental
+ Portability : POSIX, Win32
+
+ This module defines various utilities for instance declaration generation.
+-}
+
+{-# OPTIONS_HADDOCK show-extensions #-}
 {-# LANGUAGE CPP               #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
@@ -29,10 +41,13 @@ import           Data.Aeson.Types           (Options (..), Pair, Parser,
                                              defaultTaggedObject)
 
 -- | Example data used for reference:
+--
+-- @
 -- data TestData = TestData {
 --     testDataField1 :: String,
 --     testDataField2 :: Int
 --   } deriving (Show, Generic)
+-- @
 
 -- | Makes the list of 'KeyValue's for the provided type's FromJSON defaults.
 -- It reifies the type provided by its 'Name', inspects all of its fields and

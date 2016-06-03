@@ -8,15 +8,14 @@ module TestInstances (
     ) where
 
 
-import qualified Data.ByteString.Lazy         as BSL
-import           Data.Maybe                   (fromJust)
-import           GHC.Generics                 (Generic)
+import qualified Data.ByteString.Lazy as BSL
+import           Data.Maybe           (fromJust)
+import           GHC.Generics         (Generic)
 
-import           Data.Aeson                   (decode, encode)
+import           Data.Aeson           (decode, encode)
 
-import           Cloud.Haskzure.Gen.Instances (fromJSONInst, monoidInst,
-                                               toJSONInst)
-import           TestUtils                    (arbiInst)
+import           Cloud.Haskzure.Gen   (fromJSONInst, monoidInst, toJSONInst)
+import           TestUtils            (arbiInst)
 
 
 data SimpleData = SimpleData {
