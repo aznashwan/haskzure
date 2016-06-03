@@ -5,6 +5,7 @@ module Cloud.Haskzure.Core.Auth where
 
 
 import qualified Data.ByteString           as BS
+import           Data.ByteString.Char8     ()
 import qualified Data.ByteString.Lazy      as BSL
 
 import           Data.Aeson                (FromJSON (..), Value (..),
@@ -18,27 +19,27 @@ import           Cloud.Haskzure.Core.Utils ()
 
 -- | The standard set of credentials required for Azure authentication.
 data Credentials = Credentials {
-    username :: BS.ByteString,
-    -- ^ the Azure username of the form 'someuser@someapp.onmicrosoft.com'
+    tenantId     :: BS.ByteString,
+    -- ^ the ID of the AD tenant within which the application is registered.
 
-    password :: BS.ByteString
-    -- ^ the password of the said user.
+    clientId     :: BS.ByteString,
+    -- ^ the client ID of the application as configured inside the Azure AD.
+
+    clientSecret :: BS.ByteString
+    -- ^ the client secret (aka one of the application's key).
     } deriving Show
 
 
 -- | The datatype representing an Azure API token.
 data Token = Token {
-    token        :: BS.ByteString,
-    -- ^ the 'BS.ByteString' representation of the API token.
+    token     :: BS.ByteString,
+    -- ^ the 'String' representation of the API token.
 
-    refreshToken :: BS.ByteString,
-    -- ^ the token to be used for directly refreshing the API token.
-
-    expiresOn    :: Integer,
+    expiresOn :: Integer,
     -- ^ the 'Integer' representing the absolute from epoch time moment in
     -- which the token expires.
 
-    tokenType    :: BS.ByteString
+    tokenType :: BS.ByteString
     -- ^ the type of the token; shall be "Bearer" for all intents and purposes.
     } deriving Show
 
@@ -46,40 +47,48 @@ data Token = Token {
 instance FromJSON Token where
     parseJSON (Object o) = Token <$>
                            o .: "access_token" <*>
-                           o .: "refresh_token" <*>
-                           ((o .: "expires_on") >>= (return . (read :: String -> Integer))) <*>
+                           ((o .: "expires_on") >>=
+                               (return . (read :: String -> Integer))) <*>
                            o .: "token_type"
     parseJSON _ = fail "Token must be deserialized from a JSON object."
 
 
+
 -- | The endpoint where all authentication requests will be made:
-auth_endpoint :: String
-auth_endpoint = "http://login.microsoftonline.com/common/oauth2/token"
-
-
-type QueryParams = [(BS.ByteString, BS.ByteString)]
-
--- | The standard query parameters:
-azureQueryParams :: QueryParams
-azureQueryParams = [
-    ("grant_type", "password"),
-    ("resource", "https://management.core.windows.net/")
-    -- ("client_id", "hopefully unneeded"),
+mkAuthEndpoint :: BS.ByteString -> BS.ByteString
+mkAuthEndpoint ten = foldr1 BS.append [
+    "https://login.microsoftonline.com/",
+    ten,
+    "/oauth2/token"
  ]
 
 
--- | Adds credentials to query params:
-addCredentials :: Credentials -> QueryParams -> QueryParams
-addCredentials (Credentials user pass) = (++) [("username", user), ("password", pass)]
+-- 'QueryParams' is just an alias for the key-value pairs which will be sent as
+-- part of the UEB request for the API token.
+type QueryParams = [(BS.ByteString, BS.ByteString)]
 
 
+-- | Makes the set of 'QueryParams' based on the provided credentials.
+mkTokenRequestParams :: Credentials -> QueryParams
+mkTokenRequestParams creds = [
+    ("resource", "https://management.core.windows.net/"),
+    ("grant_type", "client_credentials"),
+    ("client_id", clientId creds),
+    ("client_secret", clientSecret creds)
+ ]
+
+
+-- | Requests and deserializes an API 'Token'.
 getToken :: Credentials -> IO (Either String Token)
 getToken creds = do
-    manager <- newManager tlsManagerSettings
+    request <- parseUrl (filter (/='\"') $ show $ (mkAuthEndpoint $ tenantId creds)) >>=
+        (return . urlEncodedBody (mkTokenRequestParams creds))
 
-    request <- parseUrl auth_endpoint >>=
-        (return . urlEncodedBody (addCredentials creds azureQueryParams))
+    manager <- newManager tlsManagerSettings
 
     resp <- httpLbs request manager
 
-    return $ (eitherDecode :: BSL.ByteString -> Either String Token) $ responseBody resp
+    BSL.writeFile "./resp.json" $ responseBody resp
+
+    return $ (eitherDecode :: BSL.ByteString -> Either String Token)
+            $ responseBody resp

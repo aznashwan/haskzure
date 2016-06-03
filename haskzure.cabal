@@ -25,8 +25,9 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     Cloud.Haskzure.Core, Cloud.Haskzure.Core.AzureResource, Cloud.Haskzure.Core.Resource,
-                       Cloud.Haskzure.Gen.Instances, Cloud.Haskzure.Gen.Utils, Cloud.Haskzure.Core.Auth
-  other-modules:       Cloud.Haskzure.Core.Utils
+                       Cloud.Haskzure.Gen.Instances, Cloud.Haskzure.Gen.Utils,
+                       Cloud.Haskzure.Core.Auth, Cloud.Haskzure.Core.Utils
+  -- other-modules:       
   other-extensions:    MultiParamTypeClasses, FlexibleInstances, FunctionalDependencies, OverloadedStrings
                        TemplateHaskell, QuasiQuotes
   ghc-options:         -Wall
