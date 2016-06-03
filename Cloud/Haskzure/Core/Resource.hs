@@ -1,25 +1,25 @@
+{-|
+ Module      : Resource
+ Description : Definition for core resource type.
+ Copyright   : (c) Nashwan Azhari, 2016
+ License     : Apache 2.0
+ Maintainer  : aznashwan@yahoo.com
+ Stability   : experimental
+ Portability : POSIX, Win32
+
+ Resource defines the core Resource ATD which will be used to model
+ Azure resources. Resource is an instance of AzureResource.
+-}
+
 {-# OPTIONS_HADDOCK show-extensions, prune #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE Trustworthy           #-}
 
-{-|
-Module      : Resource
-Description : Definition for core resource type.
-Copyright   : (c) Nashwan Azhari, 2016
-License     : Apache 2.0
-Maintainer  : aznashwan@yahoo.com
-Stability   : experimental
-Portability : POSIX, Win32
 
-Resource defines the core Resource ATD which will be used to model
-Azure resources. Resource is an instance of AzureResource.
--}
 module Cloud.Haskzure.Core.Resource (
-  AzureResource(..),
-  Resource(..),
-  def
+  Resource(..)
   )where
 
 

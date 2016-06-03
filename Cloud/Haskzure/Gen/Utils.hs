@@ -89,7 +89,7 @@ mkToJSONPairs typ = do
     decs <- mapM (\r -> mkToJSONexp r (mkName r)) records
     return $ ListE decs
 
--- | Rifies the simple type given by 'Name' and returns the result of applying
+-- | 'reify's the simple type given by 'Name' and returns the result of applying
 -- the given 'VarTypeBang' (or 'VarStrictType' in template-haskell <= 2.11.0)
 -- -applicable function to all the found records. This function makes hard presumptions
 -- about the provided type 'Name'. Particularly, it expects it to be a datatype

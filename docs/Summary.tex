@@ -1,0 +1,161 @@
+% Preamble
+% ---
+\documentclass[11pt]{article}
+
+% Packages
+% ---
+\usepackage[utf8]{inputenc} % Unicode support (Umlauts etc.)
+\usepackage[english]{babel} % Change hyphenation rules
+\usepackage{hyperref} % Add a link to your document
+\usepackage{graphicx} % Add pictures to your document
+
+\usepackage{color}
+\usepackage{soul}
+\usepackage{utils}
+
+\begin{document}
+
+\paragraph{Managing Azure from Haskell --- Summary}
+
+\subparagraph{Premise}
+
+Managing cloud infrastructure is an inherently transformational process,
+and nothing models transformations better than Functional Programming.
+This dissertation is meant to solidify the claim by presenting the building of
+\textit{Haskzure}, a high-level Haskell library for interacting with
+Microsoft's Azure cloud platform.
+
+\subparagraph{Example}
+
+To showcase \textit{Haskzure}'s capabilities; a complete code sample is
+presented below in accordance with the following scenario:
+
+\begin{itemize}
+    \item{}
+        two virtual networks need creating following the same set of
+        basic configuration options but in two different Azure locations.
+    \item{}
+        after creation; both need to be modified to add a particular server's
+        IP address to their list of DNS providers to be used by VM's in those
+        networks.
+\end{itemize}
+
+In the following we will further discuss this example (particularly the
+definition of \textcolor{blue}{deployVirtualNetworks}) so reviewing it
+now is advised.
+
+\subparagraph{Analysis}
+
+Upon looking at the example; there is little indication of anything
+extraordinary. As per the language bindings for Azure of any other programming
+language; we follow the canonical "define our parameters --- run our functions
+on them" pattern. There are, however, some extremely subtle but invaluable
+things going on under the hood:
+
+\begin{itemize}
+
+    \item{} all the data structures which comprise (and include) the mainline
+        \textcolor{blue}{VirtualNetwork} are rigid, typesafe datastructures.
+        \textcolor{blue}{WestUS} and \textcolor{blue}{NorthEurope}, for example,
+        are not plain strings, but both options of the well defined
+        \textcolor{blue}{Location} enum.
+
+    \item{} most notably, there is an \ul{utter lack of any sort of
+        verbose credential passing or cumbersome error checking} steps after
+        each operation. These are in no way ignored, but are handled entirely
+        transparently through Haskell's most fundamental abstraction method:
+        the monad (in this case, the \textcolor{blue}{Azure} monad).
+
+\end{itemize}
+
+\newpage
+
+\begin{minted}{haskell}
+
+import Control.Monad
+import Data.Default
+
+import Haskzure.Core      (Azure (..), Location(..),
+                           ResourceId, createOrUpdate)
+import Haskzure.Resources (VirtualNetwork(..), DhcpOptions(..), Subnet(..))
+
+-- base configuration of all our virtual networks:
+baseVN :: VirtualNetwork
+baseVN = (def :: VirtualNetwork) {
+    dhcpOptions = DhcpOptions { dnsServers = ["8.8.4.4", "8.8.8.8"]},
+    addressSpace = "10.7.0.0/16",
+    subnets = [Subnet "10.7.0.0/24"]
+}
+
+-- we define a list of two virtual networks based on the above configuration;
+-- one in the Western US Azure region; the other in Northern Europe:
+virtualNetworks :: [VirtualNetwork]
+virtualNetworks = [baseVN { location = WestUS }, baseVN { location = NorthEurope }]
+
+deployVirtualNetworks :: Credentials -> Azure [ResourceId]
+deployVirtualNetworks = do
+    -- create our two virtual networks
+    vns <- mapM createOrUpdate virtualNetworks
+
+    -- now add "9.9.9.9" as a DNS server to both the virtual networks.
+    -- for this we define a function:
+    let newDnses = DhcpOptions (("9.9.9.9" :) . dnsServers . dhcpOptions)
+
+    -- and map it over our two virtual networks:
+    vns <- mapM (\vn ->
+            createOrUpdate $ vn { dhcpOptions = newDnses vn }) vns
+
+    return $ map virtualNetworkId vns
+
+main :: IO ()
+main = do
+    -- note the initial passing in of the credentials:
+    vnids <- runAzure deployVirtualNetworks credentials
+    print $ "The virtual network ID's are: " ++ show vnids
+
+\end{minted}
+
+\newpage
+
+\subparagraph{Implementation}
+
+Azure is an incredibly rich cloud platform, with it's most recent count of
+\ul{individual} API calls ranging in the \textit{1400s}. As such, the writing
+of a client library for a particular language is a gargantuate task.
+
+\textit{Haskzure} works by generating its internal data structures based
+on the \textit{Swagger} API description format in which Microsoft itself
+publishes the specifications for their Azure Resource Manager (ARM) APIs.
+Provided these data structures, generic low-level operations are used to
+interact directly with Azure, which are then unified under a single high-level
+set of functions and structures. \newline
+At the top of this layering lies the \textcolor{blue}{Azure} monad, which
+provides a simple imperative-like domain-specific language for defining,
+querying and deleting numerous types of ARM cloud resources such as:
+
+\begin{itemize}
+
+    \item{} compute resources: virtual machines (VMs) and their sub-resources.
+    \item{} storage resources: virtual machine images and data volumes.
+    \item{} networking resources: virtual networks with their subnets, network
+        interface cards for VMs and other related resources.
+
+\end{itemize}
+
+In reality, the \textcolor{blue}{Azure} monad is actually a monad stack
+providing a default base to start from, whilst the \textcolor{blue}{AzureT}
+monad transformer contains its critical functionality and offers an easy means
+of being composed with other monads to allow for additional features such as
+logging, custom error handling and specific operation execution models
+(deploying resources either sequentially or in parallel). More details in this
+sense are provided in the dissertation itself.
+
+\subparagraph{Conclusions}
+
+Overall, the power which comes with being able to manipulate cloud resources
+through concise functional code is a great one, and also opens the road for new
+and even more exciting possibilities further outlined in the full paper.
+
+
+
+\end{document}

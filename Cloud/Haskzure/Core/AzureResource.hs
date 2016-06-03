@@ -1,21 +1,24 @@
+{-|
+ Module      : AzureResource
+ Description :
+ Copyright   : (c) Nashwan Azhari, 2016
+ License     : Apache 2.0
+ Maintainer  : Nashwan Azhari <aznashwan@yahoo.com>
+ Stability   : experimental
+ Portability : POSIX, Win32
+
+ This module contains the definition of  the AzureResource
+ typeclass to which all Azure resource datatypes must comply.
+-}
+
+
 {-# OPTIONS_HADDOCK show-extensions, prune #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses  #-}
 {-# LANGUAGE OverloadedStrings      #-}
 {-# LANGUAGE Trustworthy            #-}
 
-{-|
-Module      : AzureResource
-Description :
-Copyright   : (c) Nashwan Azhari, 2016
-	License     : Apache 2.0
-	Maintainer  : Nashwan Azhari <aznashwan@yahoo.com>
-    Stability   : experimental
-    Portability : POSIX, Win32
 
-This module contains the definition of  the AzureResource
-typeclass to which all Azure resource datatypes must comply.
--}
 module Cloud.Haskzure.Core.AzureResource (
   AzureResource(..),
   )where
@@ -25,8 +28,7 @@ import           Data.Aeson (FromJSON (..), ToJSON (..))
 import           Data.Text  (Text)
 
 
--- This module contains the definition of  the AzureResource
--- typeclass to which all Azure resource datatypes must comply.
+-- The definition of  the AzureResource typeclass to which all Azure resource datatypes must comply.
 
 
 -- | AzureResource is the typeclass to which all AzureResource

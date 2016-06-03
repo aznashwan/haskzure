@@ -16,7 +16,13 @@ module Cloud.Haskzure.Core (
 
     -- ** The Resource ADT.
     Resource(..),
+
+    -- ** Authentication data strutures and functions:
+    Credentials(..),
+    Token(..),
+    getToken
   ) where
 
-import           Cloud.Haskzure.Core.Resource (AzureResource (..),
-                                               Resource (..))
+import           Cloud.Haskzure.Core.Auth
+import           Cloud.Haskzure.Core.AzureResource
+import           Cloud.Haskzure.Core.Resource

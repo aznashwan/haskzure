@@ -1,7 +1,23 @@
+{-|
+ Module      : Cloud.Haskzure.Core.Auth
+ Description : Data structures and functions used for authentication.
+ Copyright   : (c) Nashwan Azhari, 2016
+ License     : Apache 2.0
+ Maintainer  : aznashwan@yahoo.com
+ Stability   : experimental
+ Portability : POSIX, Win32
+
+ This modules defines a set of data structures and utilities for authenticating against Azure and fetching access tokens.
+-}
+
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Cloud.Haskzure.Core.Auth where
+module Cloud.Haskzure.Core.Auth (
+    Credentials(..),
+    Token(..),
+    getToken
+    ) where
 
 
 import qualified Data.ByteString           as BS
@@ -36,7 +52,7 @@ data Token = Token {
     -- ^ the 'String' representation of the API token.
 
     expiresOn :: Integer,
-    -- ^ the 'Integer' representing the absolute from epoch time moment in
+    -- ^ the 'Integer' representing the absolute epoch time moment in
     -- which the token expires.
 
     tokenType :: BS.ByteString
