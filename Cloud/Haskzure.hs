@@ -14,9 +14,13 @@ module Cloud.Haskzure (
     -- * Core components:
     AzureResource(..), Resource(..),
 
+    -- * Resources:
+    ResourceGroup (..),
+
     -- * Instance Generation helpers and utilities:
     toJSONInst, fromJSONInst, monoidInst, recordFieldsInfo
     )where
 
 import           Cloud.Haskzure.Core
 import           Cloud.Haskzure.Gen
+import           Cloud.Haskzure.Resources

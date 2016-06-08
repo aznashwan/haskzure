@@ -30,7 +30,7 @@ import           Language.Haskell.TH.Syntax (Exp (..), Lift (lift), Lit (..),
 
 import           Data.Aeson                 (FromJSON (..), ToJSON (..), Value,
                                              genericParseJSON,
-                                             genericToEncoding)
+                                             genericToEncoding, genericToJSON)
 import           Data.Aeson.Types           (Parser)
 import           Generics.Deriving.Monoid   (mappenddefault, memptydefault)
 
@@ -64,6 +64,7 @@ import           Cloud.Haskzure.Gen.Utils
 toJSONInst :: Name -> Q [Dec]
 toJSONInst name =
     [d| instance ToJSON $( conT name ) where
+            toJSON = genericToJSON $ mkEncodingOptions name
             toEncoding = genericToEncoding $ mkEncodingOptions name
       |]
 

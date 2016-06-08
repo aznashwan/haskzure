@@ -24,10 +24,12 @@ extra-source-files:  README.md
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     Cloud.Haskzure, Cloud.Haskzure.Core, Cloud.Haskzure.Gen
-  other-modules:       Cloud.Haskzure.Core.AzureResource, Cloud.Haskzure.Core.Resource,
+  exposed-modules:     Cloud.Haskzure, Cloud.Haskzure.Core, Cloud.Haskzure.Gen,
+                       Cloud.Haskzure.Core.AzureResource, Cloud.Haskzure.Core.Resource,
                        Cloud.Haskzure.Gen.Instances, Cloud.Haskzure.Gen.Utils,
-                       Cloud.Haskzure.Core.Auth, Cloud.Haskzure.Core.Utils
+                       Cloud.Haskzure.Core.Auth, Cloud.Haskzure.Core.Utils,
+                       Cloud.Haskzure.Resources.ResourceGroups,
+                       Cloud.Haskzure.Resources
   other-extensions:    MultiParamTypeClasses, FlexibleInstances, FunctionalDependencies, OverloadedStrings
                        TemplateHaskell, QuasiQuotes
   ghc-options:         -Wall
