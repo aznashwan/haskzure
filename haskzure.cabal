@@ -28,13 +28,15 @@ library
                        Cloud.Haskzure.Core.AzureResource, Cloud.Haskzure.Core.Resource,
                        Cloud.Haskzure.Gen.Instances, Cloud.Haskzure.Gen.Utils,
                        Cloud.Haskzure.Core.Auth, Cloud.Haskzure.Core.Utils,
-                       Cloud.Haskzure.Resources.ResourceGroups,
-                       Cloud.Haskzure.Resources
+                       Cloud.Haskzure.Core.Operations,
+                       Cloud.Haskzure.Resources.ResourceGroups, Cloud.Haskzure.Resources,
+                       Cloud.Haskzure.Resources.Networking
   other-extensions:    MultiParamTypeClasses, FlexibleInstances, FunctionalDependencies, OverloadedStrings
                        TemplateHaskell, QuasiQuotes
   ghc-options:         -Wall
   build-depends:       base < 5.0, aeson, data-default, bytestring, generic-deriving,
-                       text, word8, template-haskell, containers, http-client, http-client-tls
+                       text, word8, template-haskell, containers, http-client,
+                       http-client-tls, http-types
   if impl(ghc <= 8.0)
     -- provide/emulate `Control.Monad.Fail` -- pre-GHC8
     build-depends: fail == 4.9.*

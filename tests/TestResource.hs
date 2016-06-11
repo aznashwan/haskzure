@@ -8,7 +8,6 @@ module TestResource(
   ) where
 
 import           Data.Aeson          (Value, decode, encode)
-import           Data.Text           (Text, pack)
 import           Test.QuickCheck     (Arbitrary (..), Gen)
 
 import           Cloud.Haskzure.Core (Resource (..))
@@ -19,10 +18,11 @@ import           TestUtils           ()
 -- | And a naive Arbitrary instance for a Resource:
 instance Arbitrary (Resource Value) where
     arbitrary = Resource <$>
-        (arbitrary :: Gen Text) <*>
-        (arbitrary :: Gen Text) <*>
-        (arbitrary :: Gen Text) <*>
-        (arbitrary :: Gen Text) <*>
+        (arbitrary :: Gen String) <*>
+        (arbitrary :: Gen String) <*>
+        (arbitrary :: Gen String) <*>
+        (arbitrary :: Gen String) <*>
+        (arbitrary :: Gen String) <*>
         (arbitrary ::  Gen Value)
 
 

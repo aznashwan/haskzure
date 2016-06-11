@@ -19,7 +19,8 @@
 module Cloud.Haskzure.Gen.Instances (
     toJSONInst,
     fromJSONInst,
-    monoidInst
+    monoidInst,
+    mkAllInsts
     )where
 
 import           Data.Monoid                (Monoid (..))
@@ -36,6 +37,12 @@ import           Generics.Deriving.Monoid   (mappenddefault, memptydefault)
 
 import           Cloud.Haskzure.Gen.Utils
 
+
+-- | Generates instances for 'ToJSON', 'FromJSON' and 'Monoid' provided a
+-- type which is an instance of 'GHC.Generics.Generic'.
+-- See 'toJSONInst', 'fromJSONInst' and 'monoidInst' for more details.
+mkAllInsts :: Name -> Q [Dec]
+mkAllInsts name = fmap concat $ mapM ($ name) [monoidInst, toJSONInst, fromJSONInst]
 
 -- | Generates a 'ToJSON' instance provided a datatype given by its 'Name'.
 --

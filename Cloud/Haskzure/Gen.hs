@@ -12,7 +12,7 @@
 
 module Cloud.Haskzure.Gen (
     -- ** Main instance generation functions:
-    toJSONInst, fromJSONInst, monoidInst,
+    toJSONInst, fromJSONInst, monoidInst, mkAllInsts,
 
     -- ** Instance generation utilities:
     recordFieldsInfo

@@ -14,7 +14,7 @@ import           GHC.Generics         (Generic)
 
 import           Data.Aeson           (decode, encode)
 
-import           Cloud.Haskzure.Gen   (fromJSONInst, monoidInst, toJSONInst)
+import           Cloud.Haskzure.Gen   (mkAllInsts)
 import           TestUtils            (arbiInst)
 
 
@@ -24,9 +24,7 @@ data SimpleData = SimpleData {
         simpleDataField3 :: String
     } deriving (Show, Eq, Generic)
 
-monoidInst ''SimpleData
-toJSONInst ''SimpleData
-fromJSONInst ''SimpleData
+mkAllInsts ''SimpleData
 arbiInst ''SimpleData
 
 data NestedData = NestedData {
@@ -34,9 +32,7 @@ data NestedData = NestedData {
         nestedDataField2 :: SimpleData
     } deriving (Show, Eq, Generic)
 
-monoidInst ''NestedData
-toJSONInst ''NestedData
-fromJSONInst ''NestedData
+mkAllInsts ''NestedData
 arbiInst ''NestedData
 
 

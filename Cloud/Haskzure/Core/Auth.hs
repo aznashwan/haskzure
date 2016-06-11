@@ -19,51 +19,17 @@ module Cloud.Haskzure.Core.Auth (
     ) where
 
 
-import           Data.ByteString.Char8        as BS
-import qualified Data.ByteString.Lazy         as BSL
-import           Text.Printf                  (printf)
+import           Data.ByteString.Char8     as BS
+import qualified Data.ByteString.Lazy      as BSL
 
-import           Data.Aeson                   (FromJSON (..), ToJSON (..),
-                                               Value (..), eitherDecode, encode,
-                                               (.:))
+import           Data.Aeson                (FromJSON (..), ToJSON (..),
+                                            Value (..), eitherDecode, encode,
+                                            (.:))
 import           Network.HTTP.Client
 import           Network.HTTP.Client.TLS
+import           Network.HTTP.Types.Header
 
-import           Cloud.Haskzure.Core.Resource (Resource (..))
-import           Cloud.Haskzure.Core.Utils    ()
-
-
-
--- | Azure's management URL.
-managementUrl :: String
-managementUrl = "https://management.azure.com"
-
--- | makes a request URL from the provided path.
-mkRequestUrl :: String -> String
-mkRequestUrl path = managementUrl ++ "/" ++ path
-
--- | Azure's API version to be used throughout the project.
-apiVersion :: String
-apiVersion = "2016-03-30"
-
-setQueryStringAPIVersion :: String -> Request -> Request
-setQueryStringAPIVersion v = setQueryString [("api-version", Just $ BS.pack apiVersion)]
-
--- | formats with subscription ID, resource group, resource type.
-resourceTypePathFormat :: String
-resourceTypePathFormat = "/subscriptions/%s/resourceGroups/%s/providers/%s"
-
--- | formats 'resourceTypePathFormat' provided the Subscription ID and 'Resource'.
-mkResourceTypePath :: String -> Resource a -> String
-mkResourceTypePath subId res = printf resourceTypePathFormat
-                                    subId (resGroup res) (resType res)
-
--- | formats with subscription ID, resource group, resource type and resource name.
-resourcePathFormat :: String
-resourcePathFormat =  resourceTypePathFormat ++ "/%s"
-
-mkResourcePath :: String -> Resource a -> String
-mkResourcePath subId res = printf ((mkResourceTypePath subId res) ++ "/%s") (resName res)
+import           Cloud.Haskzure.Core.Utils ()
 
 
 -- | The standard set of credentials required for Azure authentication.
@@ -105,10 +71,6 @@ instance FromJSON Token where
     parseJSON _ = fail "Token must be deserialized from a JSON object."
 
 
-mkTokenQueryParam :: Token -> QueryParam
-mkTokenQueryParam t = ("Authorization", (tokenType t) `BS.append` " " `BS.append`(token t))
-
-
 -- | The endpoint where all authentication requests will be made:
 mkAuthEndpoint :: BS.ByteString -> BS.ByteString
 mkAuthEndpoint ten = Prelude.foldr1 BS.append [
@@ -145,29 +107,8 @@ getToken creds = do
 
     resp <- httpLbs request manager
 
-    let token = (eitherDecode :: BSL.ByteString -> Either String Token) $ responseBody resp
+    let tk = (eitherDecode :: BSL.ByteString -> Either String Token) $ responseBody resp
 
-    case token of
+    case tk of
       Left m -> fail m
       Right t -> return t
-
--- | creates or updates an Azure 'Resource' by issuing a PUT request on the
--- appropriate URL using the given credentials.
-createOrUpdate :: (ToJSON a) => Credentials -> Resource a -> IO ()
-createOrUpdate creds res = do
-    token <- getToken creds
-
-    req <- parseUrl $ mkResourcePath (BS.unpack $ subscriptionId creds) res
-    let req = req {
-        method = "PUT",
-        requestBody = RequestBodyLBS $ encode $ res
-        }
-    let req = setQueryStringAPIVersion apiVersion req
-
-    manager <- newManager tlsManagerSettings
-
-    resp <- httpLbs req manager
-
-    print $ responseBody resp
-
-
