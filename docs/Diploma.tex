@@ -1,0 +1,777 @@
+% Preamble
+% ---
+\documentclass[11pt]{report}
+
+% Packages
+% ---
+\usepackage{utils}
+
+\usepackage[utf8]{inputenc} % Unicode support (Umlauts etc.)
+\usepackage[english]{babel} % Change hyphenation rules
+\usepackage{graphicx} % Add pictures to your document
+\usepackage[pdfpagelabels]{hyperref} % Add a link to your document
+\usepackage{soul}
+\usepackage{listings}
+ \renewcommand\listingscaption{Listing}
+
+\begin{document}
+
+\date{\today{}}
+\title{Haskzure: Azure Resource Manager bindings in Haskell}
+\author{Nashwan Azhari}
+
+\maketitle{}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Abstract:
+\begin{abstract}
+
+We describe the process of designing and implementing Haskzure, a Haskell
+library for managing Microsoft Azure through its set of Resource Manager APIs. The
+main purpose of the library is to provide a bare minimum set of functionality
+for performing CRUD operations on the more common compute and networking
+resources available on Azure under a unified interface familiar to functional
+programmers.
+Considering the enourmous surface area of the ARM APIs (1100+ individual calls
+available), emphasis was placed more on designing the library so as to make it
+as easy to extend as possible versus focusing on feature-completeness. \newline
+We will describe all the technical implications of writing a client library for
+the ARM APIs, al well as  how Haskzure makes use of the common purely
+functional programming idioms avaiable in Haskell to achieve a high degree of
+code reuse, and how the set of core components which provide the generic
+interface for interacting with Azure are layed out and implemented.
+
+\end{abstract}
+
+\tableofcontents{}
+
+\renewcommand\listoflistingscaption{List of source codes}
+\listoflistings
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Introduction:
+\chapter{Introduction}
+
+\section{Goal}
+
+Considering the prevalence of Cloud Computing and its immense impact on the IT
+industry as a whole, companies nowadays are commited to moving as much of their
+IT workloads (infrastructure, storage arrays, big data processing etc..) `into
+the cloud'. Whilst many choose to invest in their own datacenters and build
+an in-house \textit{private cloud} solution, the vast majority prefer to turn
+to so-called \textit{public clouds} for hosting all of their IT needs. As such,
+the private cloud business is one of the most fast-growing industries in the
+field, with huge names such as Amazon's AWS, Microsoft' Azure and Google'
+Compute Engine offering a vast selection of both cloud infrastructure elements
+and services to anyone in need. \newline
+With this stunning growth in the industry and the shift to even more distributed
+application architectures born to run in the cloud, the traditional model of a
+company hiring a handful of system administrators to managed their
+infrastructure and application lifecycle needs is no longer a feasible one.
+As the cloud became a solution to programatically configuring IT
+infrastructure, so, now, must there be a solution for configuring the clouds.
+In this sense, the most prevalent approach is that of clouds providing a means of
+remote management (most commonly HTTP-based REST APIs), through which, with the
+aid of `language binding libraries' (aka SDKs), programmers may gain access and
+programatically deploy, modify and manage all the resources the cloud platform
+offers. \newline
+Considering that managing cloud infrastructure is an inherrently
+transformational process, and that no programming paradigm better captures this
+process than functional programming, we will focus on providing such a library
+of language bindings for Microsoft's Azure public cloud platform (specifically,
+the set of `Azure Resource Manager' APIs), in Haskell, one of the most
+bleeding-edge languages in the functional programming space.
+
+
+\section{Motivation}
+
+This thesis describes the design and implementation of a Haskell library which
+provides various data structures and functions for interacting with the
+`Azure Resource Manager' (or ARM) set of APIs for Microsoft's Azure Cloud
+platform.
+\newline
+The library should:
+\begin{itemize}
+    \item{} expose the standard set of CRUD operations for the most commonly
+        used cloud resources avaiable through the ARM APIs
+    \item{} conform with the Haskell language's high-level and safe nature,
+        making it easy to use within a functional context
+    \item{} provide an easy way of extending the library's functionality to
+        newer types of cloud resources
+    \item{} include behavioral tests for all internal parts of code not
+        directly interacting with Azure
+\end{itemize}
+Considering the large surface area of the ARM APIs (about 300 resource
+types and over 1100 individual API calls), the emphasis is placed on a
+good design of the core components for easy extensibility versus absolute
+feature completeness. As will be shown, the abstractions available in Haskell
+offer an easy means of making the core functionality completely generic,
+and thus permitting for library features to be plugged in very easily.
+
+
+\section{Related Work}
+
+Cloud API binding libraries are commonplace for the more popular cloud
+platforms, and, in most cases, these libraries are offered by the cloud vendor
+themselves for a selection of the most used programming languages.
+In the case of ARM, for example, there are open source libraries
+auto-generated by Microsoft itself for C\#, Go, Java, JavaScript, Python and
+Ruby, provided with the intent of making it easier for developers to manage
+the infrastructure under their Azure subscription. \newline
+On the Haskell side, however, there are only a handful of such libraries. Most
+notable would be a set of libraries all focused on interacting with Digital
+Ocean, and one fairly limited but well-designed one for AWS\@. For Azure, the
+only Haskell-related tooling comes in the form of a library which makes use of the
+now obsolete Azure Service Management (or ASM) API\@. However, it only offers
+limited management capabilities over ASM Cloud Services with the express intention
+of being used with Cloud Haskell (a Haskell runtime designed to distribute
+programs over multiple machines). \newline
+As previously mentioned, the extremely large surface area of the ARM APIs make
+implementing a fully-featured library a daunting task, which better motivates the
+choice of Microsoft itself to almost fully auto-generate all of their libraries
+through means detailed later. We have chosen, however, to use the means of
+abstraction provided by the Haskell language to move the boundary of code
+generation farther away by hand-writing a core set of functionalities which are
+designed to be as generic as possible and only generating the static datastructures
+those core operations operate upon.
+
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Theoretical Overview:
+\chapter{Theoretical Overview}
+
+\section{Haskell}
+
+Haskell is a general-purpose, purely functional programming language developed
+by a committee of researchers starting in the early 1990s. It is one of the most
+popular functional programming languages out there, spearheading the
+functional movement as it lies as the forefront of research in this field. It
+is a language which offers a handful of independent implementations, most of which
+compile Haskell to native machine code. By far the most popular implementation is
+the \textit{Glasgow Haskell Compiler} (or GHC), as it is the one being actively
+developed by the committee, and thus the most up-to-date one with regards to the
+latest developments in the language. It is also the compiler of choice for this
+project, with more details provided in the section about tooling.
+Haskell's combination of features makes it largely unique in terms of the
+programming principles and techniques it offers, which we enumerate in the
+subsections to follow:
+
+\subsection{Purely Functional Programming Style}
+
+The functional programming style has long been considered relatively cumbersome
+due to its frowning at mutable state and side-effects. As such, many have
+argued that the cost of complete purity (in the mathematical sense, applied to
+functions) far outweighs its benefits, and thus purely functional languages
+will never actually be `useful'. Haskell manages to maintain purity throughout
+by employing a number of `functional design patterns', most notions borrowed
+from the field of \textit{Category Theory}, to deal with the likes of
+mutable state and I/O while maintaining purity.\newline
+The style lends itself very well to transformational problems (problems
+involving numerous computations and transformations done on data), and as such
+is very concise in modelling the management of cloud infrastructure.
+
+\subsection{Strong Typing Discipline and Compiler Extensions}
+
+Haskell is a statically typed language, with one of its main virtues being
+its expressive type system. It is a system designed around
+\textit{Algebraic Datatypes} (or ADTs), and typeclasses, which
+define type-level constraints on the said ADTs. The system is very simplistic
+at heart, but it however allows for almost all of the diverse types and
+constraints of the standard library to be defined using them. \newline
+In addition, there are a handful of compiler extensions which either allow for
+some added behavior to the typeclass system (MultiParamTypeClasses,
+FlexibleContexts\ldots), and some for extending the datatype system (ex:
+DataKinds, TypeFamilies, GADTs etc\ldots). Although not part of the official standard,
+most of the compiler extensions come packaged with GHC and enjoy widespread
+use due to their added value to the language. When detailing the
+implementation, we will also mention the more important extensions used in the
+creation of Haskzure.
+
+\subsection{Non-Strict Evaluation}
+
+A programming language's `evaluation strategy' refers to the way values,
+and operations which take and return values, are evaluated. More precisely, it is
+largely concerned with \textit{when} the evaluation occurs. Most programming
+languages employ a `strict evaluation' model, where a computation is performed
+as soon as the expression which contains it is evaluated (but not necessarily
+needed). This model works very well for most cases, but it does have the
+detriment of it likely doing more work than needed (such as performing
+computations assigned to unused variables, for example). \newline
+% TODO: cite Marlow
+In languages with a `non-strict evaluation strategy', excess work is usually
+prevented by various mechanisms. In Haskell, for example, the exact strategy
+used is named \textit{call-by-need}, but is often referred to as `lazy
+evaluation'. In effect, the value of an expression is only ever computed when
+needed, a practice often cobined with \textit{memoization} to also cache
+already performed computations so as to not recompute them (for example, the
+base cases of tail-recursive functions can be very useful to cache).
+Despite having clear advantages (especially in terms of memory usage), lazy
+evaluation often makes it harder to reason about the runtime behavior of
+Haskell programs, especially in a concurrent or parallel setting. Haskell does
+of course offer a means of specifying the strictness of a value's evaluation,
+a feature which may be employed when it is deemed safer to perform computations
+up-front versus the default deferred manner (\textit{Aeson}, the library
+we employ to encode and decode the JSON payloads we intract with ARM through,
+for example, is inherrently strict).
+
+\subsection{Category Theory Concepts}
+
+Haskell borrows numerous concepts from \textit{Category Theory}, a more
+abstract branch of mathematics. Most notably, the construct known
+as a \textit{Monad}, which in Haskell is modelled as a typeclass, is employed
+to abstract numerous non-functional concepts ranging from
+mutable state to exception handling in a purely functional context
+(more precisely, as a binding together of operations within a certain
+context which entails intermediate `gluing' operations). For Haskzure, we chose
+to conform to the \textit{mtl} (standing for `Monad Transformers Library'),
+which defines the standard set of Monad implementations used through most
+Haskell code (similar to what the STL is for C++).
+% TODO ^ cite LYAH
+These powerful abstractions, despite giving the language a steeper
+learning curve, allow for an amazing degree of conciceness if the problem
+domain is properly modeled, as will be shown later.
+
+\subsection{Template Haskell}
+
+Metaprogramming is an integral part of any high-level programming language. In
+Haskell's case, metaprogramming features come in the form of \textit{Template
+Haskell}, a compiler extension and library which basically allow one to create
+typed `splices' and insert them into the AST of a module before it gets
+compiled. This allows for numerous use-cases, such as automatically declaring
+datatypes and instantiating them to specific typeclasses, which is one of the
+main drivers of Haskzure's implementation we will detail more in the following
+chapter.
+
+
+\section{Azure and the ARM APIs}
+
+\subsection{Microsoft Azure}
+
+Azure is the public cloud offering provided by Microsoft. It is an immensely
+intricate system, with over 20 datacenters located worldwide serving a vast
+array of compute, networking, storage and service resources to businesses and
+even the US government. As such, it is a very hard system to manage
+efficiently, as often the resources you are deploying are not only handled by
+different Azure resource providers, but will likely get deployed on different
+continets. \newline
+Like most public clouds, Azure offers a set of APIs for managing the resources
+for your specific subscription. To be exact, Azure has more than one active API
+facades at the user's disposal.
+
+\subsection{The Azure Storage API}
+
+The Azure Storage API offers access to manipulate `storage services', the
+service-based approach to storage solutions offered by Azure. Storage services
+are the container under which all other storage entities must live.
+These include the likes of:
+\begin{itemize}
+    \item{} storage containers, which are equivalent to the directories of a
+        filesystem by holding storage blobs
+    \item{} storage blobs, which come in two flavors (namely block blobs and
+        page blobs), are akin to files on a filesystem, but are made
+        accessible via HTTP/HTTPS
+    \item{} storage queues, which are the online messaging queue solution
+        offered by Azure
+    \item{} file storage, which are separate services which provide file
+        sharing capabilities via the SMB protocol
+    \item{} table storage, which offer storage to unstructured data in a
+        similar manner to NoSQL databases
+\end{itemize}
+Alongside these, Azure also has a comprehensive offering of SQL Server
+services, big data repositories (marketed as `Data Lake Store'), and
+fully-fledged NoSQL database services. \newline
+The Storage API is accessed via sending HTTPS requests with XML payloads, and
+provides numerous managing options as well (such as georeplication of storage
+service contents, for example). For all the intents and purposes of Haskzure,
+however, we will not be interacting with the Storage API at all, as all of our
+few storage needs are also covered by the ARM APIs.
+
+    % cloud service-centric -- image?
+    % auth done by certificates
+    % xml over https
+\subsection{The Azure Service Management API}
+
+The Azure Service Management (or ASM) API was the initial cloud management API
+for Azure since its launch in 2010. The API is RESTful, the means being XML
+payloads sent over HTTPS with authentication done via thumbprints of x509
+certificates which had been pre-installed onto Azure and referenced in the
+application interacting with Azure.
+Back in its early days, Azure was leaning more towards a Platform as a
+Service-type system, with the main focus being on abstracting
+away as many details of the infrastructure as possible and allowing developers
+to deploy their application directly and let Azure manage its resource needs.
+\newline
+% TODO: insert diagram desribing cloud services:
+As such, the main unit of work under the old ASM API was the so-called `Cloud
+Service', which represented a collection of virtual machines and their
+connecting resources (network interfaces, virtual networks, etc\ldots) meant
+specifically for said virtual machines. This model very much enforced an SOA
+(Service-Oriented Architecture) on applications and posed a number of issues
+within the API's design, most prevalent being the close ties between cloud
+resources within a particular Cloud Service, but the relatively cumbersome
+links with the rest of the infrastructure elements, which lead to questions of
+whether ASM was indeed REST-compliant or not. \newline
+% TODO: ^ link networking API calls
+All in all, while the ASM API will likely still be avaiable to use for a long
+time to come, it is slowly but steadily being eclipsed by the ARM APIs.
+
+
+\subsection{The Azure Resource Manager APIs}
+
+The Azure Resource Manager (ARM) set of APIs, first released in 2015,
+represents the new solution for programatically managing your infrastructure on
+Azure. As opposed to ASM, ARM better fits the Infrastructure as a Service
+role by focusing on providing operations for managing infrastructure elements
+atomically as opposed to ASM's restrictive model of Cloud Services. It is better
+thought of as a \underline{set} of multiple API facades unified under a single
+top-level one. To be precise, the Azure team has made completely separate APIs
+for the various types of cloud resource providers they offer (i.e.\ compute,
+networking etc\ldots), each effectively having its own namespace under a grand
+unified one dubbed the `Resource Manager', as opposed to ASM's flat namespace
+implementation. The API is fully REST-compliant, with JSON-encoded payloads
+being sent via HTTPS to the appropriate subpaths of the resource providers.
+\textit{oauth2} is used as the authorization framework, with your application
+or Azure user having to be registered within an Azure \textit{Active
+Directory} which acts the \textit{authorization server} for all the oauth2
+flows currently offered via Azure. \newline
+ARM's only real enforcement when it comes to the resources you're deploying is
+that they must all be allocated to a `Resource Group'. This is however nothing
+more that a matter of labelling, as all resources may freely communicate with
+others across resource groups (but not locations), the mechanism offering a
+simple way of aggregating heterogeneous resources and performing operations on
+them in bulk (like deleting all the resources in a group, for example\ldots).
+\newline
+As an added feature, the top-level `Resource Manager' provider offers the
+ability to deploy a resource group by providing the JSON-encoded configuration
+of all the resources you'd like in it, exactly as happens in the case Amazon's
+Cloud Formation (CFN) or OpenStack's Heat. Despite its handiness though, this
+`template deployment' mode of operation cannot be really considered a complete
+orchestration solution, as its main purpose is just deploying the resources,
+after which no added management/monitoring is done.
+
+\section{Building an ARM Client Library}
+
+\subsection{Technical Details}
+
+In a nutshell, the ARM APIs work by sending the JSON-encoded payloads of
+operations via HTTPS to the Resource Manager Rest API, the more specific
+details of which shall be presented in the following sections:
+
+\subsubsection{Authorization via Azure Active Directory}
+
+The authorization framework of choice is \textit{oauth2}, which is designed to
+allow for easy implementation of authorization within applications without the
+explicit need of users to provide username and password credentials to them. In
+the case of ARM, Azure Active Directory resources play the role of the
+\textit{authoization server} in all the supported oauth2 flows. \newline
+In essence, one must register their application within an instance of Azure
+Active Directory under their subscription, a process nothing more than a
+formality done via the Azure online user interface, after which they will be
+communicated the `client ID' and `client secret' with which their application
+may solicit a temporary access token for use in authorization when actual calls
+to manage ARM resources are made. \newline
+% TODO: put oauth2 client creds flow graph here.
+The scenario presented above falls under what is known as the `client
+credentials grant', in which an HTTP URL-encoded POST is performed on the
+authentication endpoint as shown in \ref{listing:tokenRequest}.
+
+\begin{lstlisting}[
+        caption={oauth2 token request example},
+        label={listing:tokenRequest}
+    ]
+POST /<azure_ad_id>/oauth2/token?api-version=1.0 HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Host: login.windows.net
+Content-Length: 123
+
+grant_type=client_credentials&resource=<resource>&
+client_id=<client_id>&client_secret=<client_secret>
+\end{lstlisting}
+
+Note that all the parameters to be filled within the URL-encoded POST body are
+part of the standard oauth2 client credentials grant flow with the `resource'
+we are requesting access to being, in all cases of authorization against
+the Azure APIs, \url{https://management.core.windows.net/}.
+If all the provided information was correct and authorization permitted,
+a JSON-encoded response containing the access token and some
+additional information is returned to be sent alongside the management API
+calls. The structure of the response is presented in \ref{listing:tokenResponse}.
+
+\begin{listing}[H]
+\caption{Structure of token response.}
+\label{listing:tokenResponse}
+\begin{minted}{json}
+{
+    "token_type": "Bearer",
+    "access_token": "<token>",
+    "expires_in": "<expiration_delta_seconds>",
+    "expires_on": "<absolute_expiry_moment>",
+    "not_before": "<minimum_absolute_expiry_moment>",
+    "resource": "https://management.core.windows.net/"
+}
+\end{minted}
+\end{listing}
+
+\subsubsection{Operations through the HTTP-based REST APIs}
+
+The ARM APIs are fully REST-compliant with all interactions done via HTTP\@. Each
+particular resource type has its own URL at which HTTP requests may be
+performed to issue certain actions. The general format of the resource URLs is
+listed in \ref{listing:urlFormat}.
+
+\begin{lstlisting}[
+        caption={URL format of an ARM resource on Azure},
+        label={listing:urlFormat}
+    ]
+https://management.azure.com/subscriptions/<subscription_id>
+/resourceGroups/<resource_group_name>/providers/<provider_name>
+/<resource_type>[/<resource_name>][/operation_name]
+\end{lstlisting}
+
+With each of the respective parameters being:
+
+\begin{itemize}
+    \item{subscription\_id}: the ID of the Azure subscription under which the
+        resource should be created
+    \item{resource\_group\_name}: the name of the resource group under which
+        the resource the operation is being performed on lies (recall that an
+        ARM resource may not exists outside of a resource group)
+    \item{provider\_name}: the name of the resource provider which handles that
+        particular resource type. All resource provider names follow the format
+        of `Microsoft.*', where * is the domain the provider handles (for
+        example, there is a provider named `Microsoft.Compute' which handles
+        compute resources such as virtual machines, `Microsoft.Network' for
+        networking resources etc\ldots)
+    \item{resource\_type}: the type of the resource we want to manipulate
+        (`virtualMachines', for example)
+    \item{resource\_name}: if we are performing an operation on a specific
+        resource, we must also provide its name
+    \item{operation\_name}: if performing a specific operation on a resource,
+        we must provide the name of the operation in the URL (`redeploy' for
+        a specific virtual machine, for example)
+\end{itemize}
+
+The vast majority of operations exposed through the ARM APIs follow the same
+basic model of interaction with regards to the HTTP methods used, namely:
+
+\begin{itemize}
+    \item{GET}: issues an information \ul{retrieval} request for the resource
+        specified in the URL:
+        \begin{itemize}
+            \item{} if the request URL describes a particular resource given by
+                its name, the JSON-encoded properties of that resource are
+                returned in the body of the response with HTTP 200, with a 404
+                issued in case the resource does not exist
+            \item{} if the request URL describes a whole type of resources, the
+                response will contain a JSON-encoded list of all the individual
+                resources of that type (in the given resource group, of course)
+        \end{itemize}
+    \item{PUT}: issues a \ul{creation} request for a particular resource whose
+        specific properties are provided via the JSON-encoded body, or, in case
+        the resource already exists, its properties are \ul{updated} with the
+        provided ones:
+        \begin{itemize}
+            \item{} if the operation takes effect immediately, HTTP 200 is
+                returned, as well as a repeat of the details of the request
+            \item{} if the operation takes time to finish, HTTP 201 is
+                returned, as well as a repeat of the details of the request and
+                the URL at which to poll until the operation has finished
+        \end{itemize}
+    \item{POST}: issues an \ul{operation} request for a particular resource
+        (like powering a virtual machine on/off, for example):
+        \begin{itemize}
+            \item{} if the operation is accepted, HTTP 202 is usually returned,
+                as well as a repeat of the details of the request
+            \item{} most operations are modeled as long-running, with a polling
+                URL provided within the response body
+            \item{} status code 204 is also possible when there is no need for
+                a response body to be returned
+        \end{itemize}
+    \item{DELETE}: issue a \ul{deletion} request for a particular resource:
+        \begin{itemize}
+            \item{} if the operation is accepted but it is a long-running
+                operation (like deleting a virtual machine, for example), then
+                HTTP 200 is usually returned alongside a polling URL in the
+                response body
+            \item{} if the operation should take effect immediately, then HTTP
+                204 is usually returned with no response body
+        \end{itemize}
+\end{itemize}
+
+\subsubsection{API Payload Format}
+
+The payloads of the HTTP transactions with the ARM APIs are encoded in JSON
+format and sent through the bodies of the HTTP requests/responses. The exact
+contents often represents the properties of the resources that are being
+queried, created or modified, which are specific to each resource in turn.
+An example of the set of properties one might expect from an Azure
+Availability Set, a resource which specifies replication properties for virtual
+machines, can be found in \ref{listing:availabilitySetJSON}.
+
+\begin{listing}[H]
+\caption{JSON representation of an Availability Set's properties.}
+\label{listing:availabilitySetJSON}
+\begin{minted}{json}
+{
+    "id": "<availability_set_id>",
+    "name": "<availability_set_name>",
+    "location": "availability_set_location",
+    "type": "Microsoft.Compute/availabilitySets",
+    "platformUpdateDomainCount": 5,
+    "platformFaultDomainCount": 5,
+    "virtualMachines": "[<list of virtual machines from the availability set>]"
+}
+\end{minted}
+\end{listing}
+
+Of special note is the fact that some properties are common for all ARM
+resources, namely:
+
+\begin{itemize}
+    \item{id}: unique ID of the resource which is in fact the whole path
+        following the Azure Management DNS name from the URL provided in the
+        previous listing.
+        % TODO: link URL listing ^
+    \item{name}: name of the resource, which may also be extracted from its ID
+    \item{location}: the Azure location at which the resource has been
+        deployed in normalized form (ex: `West US' is encode as `westus')
+    \item{type}: although not mandatory for most transmissions, the type of the
+        entity may also be provided under the form
+        `ResourceProvider/resourceType'
+\end{itemize}
+
+Most noteworthy is that the exact details of how the payloads are constructed
+per operation is not entirely standard. However, as described in the previous
+section, the following guidelines apply to the structure of the payloads with
+respect to the set of properties of the resource which constitutes the object
+of our request:
+
+\begin{itemize}
+    \item{} sent as-is when a creation, update or operation request is
+        performed for/on a single resource
+    \item{} recieved as-is when a `get' request is performed on a single
+        resource
+    \item{} recieved as members of a list found under the `values' key
+        whenever a listing is requested (a GET performed on a resource type URL)
+    \item{} nested within the properties of a different resource when
+        operations are performed on it (ex: virtual subnets may either
+        be defined on their own, or when the virtual network they are part of
+        is defined)
+\end{itemize}
+
+\subsection{The Swagger API Description Format}
+
+As seen in the previous section, there are a large amount of variables to take
+into account when implementing a specific ARM API call, with a lot of aspects
+not being entirely standard throughout the whole space of possible calls. As
+such, most vendors which offer such broad API (1100+ calls for all the
+providers on their latest API versions), often also publish all of the
+available API calls in an API description format. In Azure's case, the ARM APIs
+are documented in a format known as \textit{Swagger} (recently adopted by the
+`OpenAPI initiative' and now known as the `OpenAPI Specification format').
+
+% TODO: link swagger stuffs here and there
+
+Swagger is an API description format based on JSON\@. Officially, the format only
+exists as a JSON schema to which all Swagger files must comply, while Swagger
+itself has JSON schema-like properties (references to other resources, files
+etc\ldots). Provided a complete Swagger description of an API, we may find in
+it the following:
+
+\begin{itemize}
+    \item{} the \ul{base host} against which all other requests are made (in our
+        case that will always be \url{https://management.core.windows.net/})
+    \item{} the communication schema (\ul{protocol}) used (in our case,
+        always HTTP)
+    \item{} the \ul{communication format} through which interactions are
+        performed (in our case, always either `application/json' or
+        `text/json', encoded as UTF-8)
+    \item{} the \ul{security/authorization} mechanism to be used and extra details
+        about it (in our case, all the information presented in the section
+        about authorization)
+    \item{} the application \ul{paths} available on the server (detailed in the
+        section about the ARM HTTP-based REST APIs)
+    \item{} for each path, the available \ul{operations} to be performed on
+        that path (GET, POST etc\ldots)
+    \item{} for each operation, all of its associated \ul{parameters} (URL path
+        parameters, query parameters, request body format)
+    \item{} for each operation, all of its associated \ul{response details}
+        (possible status codes, response format)
+\end{itemize}
+
+An extract of the description for the API call which creates a new
+Availability Set with respect to the latest version of the ARM APIs can be
+found in listing~\ref{listing:availabilitySetCreateSwagger}.
+
+\begin{listing}[H]
+\caption{Swagger excerpt for Availability Set creation operation.}
+\label{listing:availabilitySetCreateSwagger}
+\begin{minted}{json}
+"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/
+    providers/Microsoft.Compute/availabilitySets/{name}": {
+    "put": {
+        "operationId": "AvailabilitySets_CreateOrUpdate",
+        "parameters": [{
+                "name": "resourceGroupName",
+                "in": "path",
+                "required": true,
+                "type": "string",
+            }, {
+                "name": "name",
+                "in": "path",
+                "required": true,
+                "type": "string",
+            }, {
+                "name": "parameters",
+                "in": "body",
+                "required": true,
+                "schema": {
+                    "$ref": "#/definitions/AvailabilitySet"
+                },
+            }, {
+                "$ref": "#/parameters/ApiVersionParameter"
+            }, {
+                "$ref": "#/parameters/SubscriptionIdParameter"
+            }
+        ],
+        "responses": {
+            "200": {
+                "schema": {
+                  "$ref": "#/definitions/AvailabilitySet"
+                }
+            }
+        }
+    }
+}
+\end{minted}
+\end{listing}
+\newpage
+
+Please note that it has been partially reformated and some auxiliary details
+have been left out (such as the `description' fields of each of the
+parameters), but the rest is factually accurate. Also of note is that the
+actual schema for the structure of the body of the request is as reference to
+its respective definition within the schema (`\#/definitions/AvailabilitySet'),
+which coincides with the structure presented in
+\ref{listing:availabilitySetJSON}.
+
+
+The Swagger description of the ARM APIs has proved invaluable in understanding
+the features of the API and details of each operation. It is also where the
+figures of 1100+ individual calls involving 300 or so individual resources were
+extracted from.
+
+\subsection{Swagger-based Client Library Generation}
+
+Provided the thorough Swagger description of the ARM APIs, it may seem almost
+natural to strive to derive as much functionality as possible within client
+libraries from it. As previously mentioned, this is the exact practice
+Microsoft has employed for the collection of Azure client libraries they offer.
+
+\subsection{Azure AutoRest}
+
+The methodology by which the Azure team generates these libraries follows this
+basic set of principles:
+
+\begin{itemize}
+    \item{} write a minimum set of foundation code by hand, which will be later
+        reused in the generated code (this includes functionality such as the
+        authentication, basic wrappers of the standard HTTP library from the
+        language in question, and abstract base classes to inherit from later if
+        in an Object-Oriented setting)
+    \item{} use the Swagger description to generate the types/datastructures
+        which represent the transmission payloads (these are often referred to
+        as the `models' and implement some generic interfaces for
+        serialization/deserialization to/from JSON)
+    \item{} use the generated models to generate all of the code of the
+        specific operations which use those models (ex: implementing the
+        GET, PUT and DELETE operations based on the model of a virtual machine)
+\end{itemize}
+
+The latter two points are all handled by a project developed by Microsoft known
+as `Azure AutoRest'. AutoRest is written in C\# and generates code based on
+\textit{Razor templates}, a template markup syntax which usually carries the
+file extension `cshtml'. The specific details of the generated code are filled
+into the Razor template programatically and results in the client library code.
+
+\subsubsection{Disadvantages of Code Generation}
+
+Whilst code generation does bring the advantage of mediating all of the
+particularities of some API calls, it does also bring some drawbacks. \newline
+Firstly and obviously, code generation is inherrently \ul{imperfect}. At the
+start of the library generation initiative, the initial results of AutoRest
+were practically unusable as the generated code often did not even compile (in the
+case of the Go, Java and C\# libraries), or were incorrect and lead to runtime
+crashes (in the case of the dynamic languages such as Python and Ruby). There
+were many cases where the AutoRest system and even the Swagger specifications
+themselves had to be retroactively refactored in order to better facilitate
+support for each language in part. Even nowadays updates to the specification
+still uncover some bugs in AutoRest which lead to the libraries being sub-par.
+\newline
+Secondly, the code generated by AutoRest can be extremely hard to read and
+understand, as the intricacies of generated code are very hard to reason about
+upon just examining the results. This is most aparrent in the case of the
+dynamic languages, where endless nested if's and returns of control litter the
+code, especially due to the issue of long running vs\. non-long running
+operations. This problem is so pronounced it is even recommended that people
+turn to reading the Swagger specification directly to understand the operations
+they are using instead of turning to the code itself. \newline
+These issues are what inspired us to instead use the Swagger specification as
+little as possible and use Haskell's abstraction mechanisms to write generic
+code which can be resused across almost all API calls.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Implementation:
+\chapter{Haskzure's implementation}
+
+\section{The Library's interface} % 2
+    % short build-up to the next section's contents:
+        % both low-level function and data structure access
+        % high-level monadic API
+
+%%% NOTE: likely to be dropped:
+\section{Base Typeclasses}
+    % the AzureResource Typeclass: motication and functioning
+    % the Resource and Subresource data structures
+
+\section{Generating the data structures from Swagger} % 3 pages
+    % parsing the Swagger:
+        % How the Azure folks' format is non-standard and imparseable
+        % How i worked around this by processing the JSON myself (credit Aeson)
+    % Template Haskell data structure and instance declarations for the above
+
+\section{Details on the implementation of Authentication} % 2 pages
+    % describe AzAD app permissions setup
+    % oauth2 details
+    % code samples for token refreshing etc...
+
+\section{The low-level functions} % 2 pages
+    % simply unifying the base types/typeclasses and the authentication parts
+    % will offer generic function useful for people in general...
+
+\section{The high-level interface} % 6 pages
+    % should I explain the class Monad stack?
+    % Data structures will be Monoid instances
+    % The AzureT Transformer:
+        % will contain some intrinsic members (type info; API version blah...)
+        % will handle stuff under the hood:
+            % validating requests/responses
+            % ensuring proper resource deployment
+            % (maybe make it take the execution model?)
+    % The Azure Monad:
+        % underlying structure will contain above mentioned info
+        % (IO m, Logger m, Either m, State m) => AzureT m
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Implementation:
+\chapter{Using the Library} % 2 pages
+    % fetching off github; building and including
+    % larger pieces of sample code
+
+\chapter{Conclusions} % 2 pages
+    % What have I learned and stuff?
+    % Future plans for the project
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Implementation:
+\chapter{Toolchain and Libraries Used}
+
+\end{document}
