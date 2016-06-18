@@ -14,7 +14,12 @@
 \usepackage{cite}
 \usepackage[a4paper, margin=2cm]{geometry}
 \usepackage{listings}
- \renewcommand\listingscaption{Listing}
+\lstset{captionpos=b,numberbychapter=false}
+\providecommand*{\listingautorefname}{Listing}
+
+\makeatletter
+\AtBeginDocument{\let\c@listing\c@lstlisting}
+\makeatother
 
 \begin{document}
 
@@ -195,8 +200,8 @@ A programming language's `evaluation strategy' refers to the way expressions,
 and operations which operate on expressions, are evaluated. More precisely, it is
 largely concerned with \textit{when} the evaluation occurs. Most programming
 languages employ a `strict evaluation' model, where a computation is performed
-as soon as the expression which it will be bound to is declared (but not
-necessarily needed). This model works very well for most cases, but it does
+as soon as the expression is bound to a variable (but not necessarily
+needed). This model works very well for most cases, but it does
 carry the chance of there being more work done than needed (such as evaluating
 expressions assigned to unused variables, for example). \newline
 In languages with a `non-strict evaluation strategy', excess work is usually
@@ -293,7 +298,7 @@ few storage needs are also covered by the ARM APIs.
 
 The Azure Service Management (or ASM) API was the initial cloud management API
 for Azure since its launch in 2010. The API is RESTful, the means being XML
-payloads sent over HTTPS with authentication done via thumbprints of x509
+payloads sent over HTTPS with authentication done via thumbprints of X.509
 certificates which had been pre-installed onto Azure and referenced in the
 application interacting with Azure.
 Back in its early days, Azure was leaning more towards a Platform as a
@@ -330,9 +335,9 @@ networking etc\ldots), each effectively having its own namespace under a grand
 unified one dubbed the `Resource Manager', as opposed to ASM's flat namespace
 implementation. The API is fully REST-compliant, with JSON-encoded payloads
 being sent via HTTPS to the appropriate subpaths of the resource providers.
-\textit{oauth2} is used as the authorization framework, with your application
+\textit{OAuth2} is used as the authorization framework, with your application
 or Azure user having to be registered within an Azure \textit{Active
-Directory} which acts the \textit{authorization server} for all the oauth2
+Directory} which acts the \textit{authorization server} for all the OAuth2
 flows currently offered via Azure. \newline
 ARM's only real enforcement when it comes to the resources you're deploying is
 that they must all be allocated to a `Resource Group'. This is however nothing
@@ -358,29 +363,28 @@ resource providers.
 \subsection{Technical Details}
 
 In a nutshell, the ARM APIs work by sending the JSON-encoded payloads of
-operations via HTTPS to the Resource Manager Rest API, the more specific
-details of which shall be presented in the following sections:
+operations via HTTPS to the Resource Manager Rest API. The details
+of this process are presented in the following sections.
 
 \subsubsection{Authorization via Azure Active Directory}
 
-The authorization framework of choice is \textit{oauth2}, which is designed to
+The authorization framework of choice is \textit{OAuth2}, which is designed to
 allow for easy implementation of authorization within applications without the
 explicit need of users to provide username and password credentials to them. In
 the case of ARM, Azure Active Directory resources play the role of the
-\textit{authoization server} in all the supported oauth2 flows. \newline
+\textit{authorization server} in all the supported OAuth2 flows. \newline
 In essence, one must register their application within an instance of Azure
-Active Directory under their subscription (a process nothing more than a
-formality done via the Azure online user interface), after which they will be
+Active Directory under his/her subscription (a straightforward process done
+via the Azure online user interface), after which they will be
 communicated the `client ID' and `client secret' with which their application
 may solicit a temporary access token for use in authorization when actual calls
 to manage ARM resources are made. The scenario presented above falls under what
 is known as the `client credentials grant', in which an HTTP URL-encoded POST
-is performed on the authentication endpoint as shown in listing
-~\ref{listing:tokenRequest}.
+is performed on the authentication endpoint as shown in \autoref{listing:tokenRequest}.
 % TODO: put oauth2 client creds flow graph here.
 
 \begin{lstlisting}[
-        caption={oauth2 token request example},
+        caption={OAuth2 token request example},
         label={listing:tokenRequest}
     ]
 POST /<azure_ad_id>/oauth2/token?api-version=1.0 HTTP/1.1
@@ -393,14 +397,14 @@ grant_type=client_credentials&resource=<resource>&
 \end{lstlisting}
 
 Note that all of the parameters to be filled within the URL-encoded POST body
-are part of the standard oauth2 client credentials grant flow with the
+are part of the standard OAuth2 client credentials grant flow with the
 `resource' we are requesting access to being, in all cases of authorization
 against the Azure APIs, \url{https://management.core.windows.net/}.
 If the provided information was correct and authorization is granted,
 a JSON-encoded response containing the access token and some
 additional information is returned to be sent as a header field in all
 subsequent API calls requiring authorization. The structure of the
-authorization response is presented in ~\ref{listing:tokenResponse}.
+authorization response is presented in \autoref{listing:tokenResponse}.
 
 \begin{listing}[H]
 \caption{Structure of token response.}
@@ -422,7 +426,7 @@ authorization response is presented in ~\ref{listing:tokenResponse}.
 The ARM APIs are fully REST-compliant with all interactions done via HTTP\@. Each
 particular resource type has its own URL at which HTTP requests may be
 performed to issue certain actions. The general format of the resource URLs is
-listed in ~\ref{listing:urlFormat}.
+listed in \autoref{listing:urlFormat}.
 
 \begin{lstlisting}[
         caption={URL format of an ARM resource on Azure},
@@ -438,12 +442,12 @@ With each of the respective parameters being:
 \begin{itemize}
     \item{subscription\_id}: the ID of the Azure subscription under which the
         resource should be created
-    \item{resource\_group\_name}: the name of the resource group under which
-        the resource the operation is being performed on lies (recall that an
-        ARM resource may not exists outside of a resource group)
+    \item{resource\_group\_name}: the name of the resource group which contains
+        the resource the operation is being performed on (recall that an
+        ARM resource may not exist outside of a resource group)
     \item{provider\_name}: the name of the resource provider which handles that
-        particular resource type. All resource provider names follow the format
-        of `Microsoft.*', where * is the domain the provider handles (for
+        particular resource type. All resource provider names have the format
+        `Microsoft.*', where * is the domain the provider handles (for
         example, there is a provider named `Microsoft.Compute' which handles
         compute resources such as virtual machines, `Microsoft.Network' for
         networking resources etc\ldots)
@@ -469,7 +473,7 @@ basic model of interaction with regards to the HTTP methods used, namely:
                 issued in case the resource does not exist
             \item{} if the request URL describes a whole type of resources, the
                 response will contain a JSON-encoded list of all the individual
-                resources of that type (in the given resource group, of course)
+                resources of that type (in the given resource group)
         \end{itemize}
     \item{PUT}: issues a \ul{creation} request for a particular resource whose
         specific properties are provided via the JSON-encoded body, or, in case
@@ -511,7 +515,7 @@ contents often represents the properties of the resources that are being
 queried, created or modified, which are specific to each resource in turn.
 An example of the set of properties one can expect for an Azure
 Availability Set, a resource which specifies replication properties for virtual
-machines, can be found in ~\ref{listing:availabilitySetJSON}.
+machines, can be found in \autoref{listing:availabilitySetJSON}.
 
 \begin{listing}[H]
 \caption{JSON representation of an Availability Set's properties.}
@@ -535,13 +539,13 @@ resources, namely:
 \begin{itemize}
     \item{id}: unique ID of the resource which is in fact the whole path
         following the Azure Management DNS name from the URL provided in
-        listing ~\ref{listing:urlFormat}.
+        \autoref{listing:urlFormat}.
     \item{name}: name of the resource, which may also be extracted from its ID
     \item{location}: the Azure location at which the resource has been
-        deployed in normalized form (ex: `West US' is encode as `westus')
-    \item{type}: although not mandatory for most transmissions as it is
-        directly deductible from the request URL's path, the type of the
-        entity may also be provided under the form
+        deployed in normalized form (ex: `West US' is encoded as `westus')
+    \item{type}: not mandatory for most transmissions as it is
+        directly deductible from the request URL path. The type of the
+        entity may also be provided in the form
         `ResourceProvider/resourceType'
 \end{itemize}
 
@@ -554,9 +558,9 @@ of our request:
 \begin{itemize}
     \item{} sent as-is when a creation, update or operation request is
         performed for/on a single resource
-    \item{} recieved as-is when a GET request is performed on a single
+    \item{} received as-is when a GET request is performed on a single
         resource
-    \item{} recieved as members of a list found under the `values' key
+    \item{} received as members of a list found under the `values' key
         whenever a listing is requested (a GET performed on a resource type URL)
     \item{} nested within the properties of a different resource when
         operations are performed on it (ex: virtual subnets may either
@@ -569,14 +573,14 @@ of our request:
 As seen in the previous section, there are a large amount of variables to take
 into account when implementing a specific ARM API call, with a lot of aspects
 not entirely consistent throughout the whole space of possible calls. As
-such, most vendors which offer such broad API (1100+ calls for all the
+such, most vendors which offer such broad APIs (1100+ calls for all the
 providers on their latest API versions), often also publish all of the
 available API calls in an API description format. In Azure's case, the ARM APIs
 are documented \cite{azureApiSpecs} in a format known as \textit{Swagger}
 (recently adopted by the `OpenAPI Initiative' \cite{openApiInitiative} and
 now known as the  `OpenAPI Specification Format').
 Swagger is an API description format based on JSON\@. Officially, the format only
-exists as a JSON schema \cite{swaggerSpecification} to which all Swagger files
+exists as a JSON schema~\cite{swaggerSpecification} to which all Swagger files
 must comply, while Swagger itself also has JSON schema-like properties (references
 to other resources, files etc\ldots). Provided a complete Swagger description
 of an API, we may find in it the following:
@@ -604,7 +608,7 @@ of an API, we may find in it the following:
 
 An extract of the description for the API call which creates/updates a new
 Availability Set with respect to the latest version of the ARM APIs can be
-found in listing~\ref{listing:availabilitySetCreateSwagger}.
+found in \autoref{listing:availabilitySetCreateSwagger}.
 
 \begin{listing}[H]
 \caption{Swagger excerpt for Availability Set creation operation.}
@@ -648,15 +652,13 @@ found in listing~\ref{listing:availabilitySetCreateSwagger}.
 }
 \end{minted}
 \end{listing}
-\newpage
 
-Please note that it has been partially reformated and some auxiliary details
+This excerpt has been partially reformatted and some auxiliary details
 have been left out (such as the `description' fields of each of the
 parameters), but the rest is factually accurate. Also of note is that the
-actual schema for the structure of the body of the request is as reference to
+actual schema for the structure of the request body is as reference to
 its respective definition within the schema (`\#/definitions/AvailabilitySet'),
-which coincides with the structure presented in listing
-~\ref{listing:availabilitySetJSON}.
+which coincides with the structure presented in \autoref{listing:availabilitySetJSON}.
 
 
 The Swagger description of the ARM APIs has proved invaluable in understanding
@@ -666,9 +668,9 @@ extracted from.
 
 \subsection{Swagger-based Client Library Generation}
 
-Provided the thorough Swagger description of the ARM APIs, it may seem almost
-natural to strive to derive as much functionality as possible within client
-libraries from it. As previously mentioned, this is the exact practice
+Given the thorough Swagger description of the ARM APIs, it may seem almost
+natural to try to derive as much client library functionality directly from the
+specifications. As previously mentioned, this is the exact practice
 Microsoft has employed for the collection of Azure client libraries they offer.
 
 \subsection{Azure AutoRest}
@@ -691,8 +693,8 @@ basic set of principles:
         GET, PUT and DELETE operations based on the model of a virtual machine)
 \end{itemize}
 
-The latter two points are all handled by a project developed by Microsoft known
-as `Azure AutoRest' \cite{azureAutoRest}. AutoRest is written in C\# and
+The last two points are handled by a Microsoft project known
+as `Azure AutoRest'~\cite{azureAutoRest}. AutoRest is written in C\# and
 generates code based on \textit{Razor templates}, a template markup syntax
 which usually carries the file extension `cshtml'. The specific details of the
 generated code are filled into the Razor template programatically and results
@@ -702,10 +704,10 @@ in the client library code.
 
 Whilst code generation does bring the advantage of mediating all of the
 particularities of some API calls, it does also bring some drawbacks. \newline
-Firstly and obviously, code generation is inherrently \ul{imperfect}. At the
+Firstly and obviously, code generation is inherently \ul{imperfect}. At the
 start of the library generation initiative, the first results of AutoRest
 were practically unusable as the generated code often did not even compile (in the
-case of the Go, Java and C\# libraries), or were incorrect and lead to runtime
+case of the Go, Java and C\# libraries), or were incorrect and led to runtime
 crashes (in the case of the dynamic languages such as Python and Ruby). There
 were many cases where the AutoRest system and even the Swagger specifications
 themselves had to be retroactively refactored in order to better facilitate
@@ -714,15 +716,15 @@ still uncover some bugs in AutoRest which lead to the libraries being sub-par.
 \newline
 Secondly, the code generated by AutoRest can be extremely hard to read and
 understand, as the intricacies of generated code are very hard to reason about
-upon just examining the results. This is most aparrent in the case of the
+upon just examining the results. This is most apparent in the case of the
 dynamic languages, where endless nested if's and returns of control litter the
 code, especially due to the issue of long running versus non-long running
 operations. This problem is so pronounced it is even recommended that people
 turn to reading the Swagger specification directly to understand the operations
 they are using instead of turning to the code itself. \newline
-These issues are what inspired us to instead use the Swagger specification as
-little as possible and use Haskell's abstraction mechanisms to write generic
-code which can be resused across almost all API calls.
+These issues prompted us to use the Swagger specification as
+little as possible and instead use Haskell's abstraction mechanisms to write generic
+code which can be reused across almost all API calls.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Implementation:
