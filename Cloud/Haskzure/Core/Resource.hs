@@ -8,7 +8,7 @@
  Portability : POSIX, Win32
 
  Resource defines the core Resource ATD which will be used to model
- Azure resources. Resource is an instance of AzureResource.
+ Azure resources.
 -}
 
 {-# OPTIONS_HADDOCK show-extensions, prune #-}
@@ -23,19 +23,16 @@ module Cloud.Haskzure.Core.Resource (
   )where
 
 
-import           Data.Aeson                        (FromJSON (..), ToJSON (..),
-                                                    Value (..), object, pairs,
-                                                    (.:), (.=))
-import           Data.Default                      (Default, def)
-import           Data.Monoid                       ((<>))
-import           Data.Text                         (Text)
+import           Data.Aeson                (FromJSON (..), ToJSON (..),
+                                            Value (..), object, pairs, (.:),
+                                            (.=))
+import           Data.Monoid               ((<>))
 
-import           Cloud.Haskzure.Core.AzureResource (AzureResource (..))
-import           Cloud.Haskzure.Core.Utils         ()
+import           Cloud.Haskzure.Core.Utils ()
 
 
 -- | Resource defines the core Resource ATD which will be used
--- to model Azure resources. Resource is an instance of AzureResource.
+-- to model Azure resources.
 
 
 -- | Resource is the basic implementation of a generic Azure resource:
@@ -46,7 +43,7 @@ data Resource a = Resource {
     -- | resName is the Name of the Resource:
     resName       :: String,
 
-    -- | resGroup is the Name of the Resource Group in which the Resource lives.
+    -- | resGroup is the Name of the Resource Group in which the 'Resource' lives.
     resGroup      :: String,
 
     -- | resLocation is the Location of the Resource:

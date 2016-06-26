@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP               #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
@@ -25,6 +24,7 @@ import           Test.QuickCheck            (Arbitrary (..), Gen (..), Property,
 import           Cloud.Haskzure.Gen         (recordFieldsInfo)
 
 
+-- | Generates an 'Arbitrary' instance for the data type with the provided 'Name'.
 arbiInst :: Name -> Q [Dec]
 arbiInst name = do
     records <- recordFieldsInfo (\(n,_,t) -> (n,t)) name

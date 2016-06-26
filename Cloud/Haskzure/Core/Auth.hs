@@ -22,12 +22,10 @@ module Cloud.Haskzure.Core.Auth (
 import           Data.ByteString.Char8     as BS
 import qualified Data.ByteString.Lazy      as BSL
 
-import           Data.Aeson                (FromJSON (..), ToJSON (..),
-                                            Value (..), eitherDecode, encode,
-                                            (.:))
+import           Data.Aeson                (FromJSON (..), Value (..),
+                                            eitherDecode, (.:))
 import           Network.HTTP.Client
 import           Network.HTTP.Client.TLS
-import           Network.HTTP.Types.Header
 
 import           Cloud.Haskzure.Core.Utils ()
 

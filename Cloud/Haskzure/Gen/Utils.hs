@@ -111,19 +111,19 @@ recordFieldsInfo f name = do
 
 -- | Makes set of Aeson 'Options' for encoding datatypes.
 mkEncodingOptions :: Name -> Options
-mkEncodingOptions n = aesonOptions {
+mkEncodingOptions n = baseAesonOptions {
     fieldLabelModifier = mkFieldLabelPrefixRemoveModifier n
 }
 
--- | Makes set of Aeson 'Options' for decofing datatypes.
+-- | Makes set of Aeson 'Options' for decoding datatypes.
 mkDecodingOptions :: Name -> Options
-mkDecodingOptions n = aesonOptions {
+mkDecodingOptions n = baseAesonOptions {
     fieldLabelModifier = mkRecordLabelPrefixAddModifier n
 }
 
 -- | Makes field label modifier by removing datatype prefix and uncapitalizing.
 -- ex: TypeName "typeNameField" -> "field"
-mkFieldLabelPrefixRemoveModifier:: Name -> String -> String
+mkFieldLabelPrefixRemoveModifier :: Name -> String -> String
 mkFieldLabelPrefixRemoveModifier n = lowerFirst . drop (length $ showName n)
 
 -- | Makes record name modifier by capitalizing and adding datatype prefix.
@@ -139,8 +139,8 @@ lowerFirst (x:xs) = toLower x : xs
 lowerFirst [] = []
 
 -- | Base Aeson Options used for encoding/decoding.
-aesonOptions :: Options
-aesonOptions =  Options {
+baseAesonOptions :: Options
+baseAesonOptions =  Options {
     fieldLabelModifier = id,
     constructorTagModifier = id,
     allNullaryToStringTag = True,
@@ -149,12 +149,13 @@ aesonOptions =  Options {
     unwrapUnaryRecords = False
 }
 
--- | Merges two Aeson values via Map Monoid instance.
+-- | Merges two Aeson 'Value's via 'Map' 'Monoid' instance.
 (<+>) :: Value -> Value -> Value
 Object x <+> Object y = Object (x <> y)
 _ <+> _ = error "<+>: merging non-objects"
 
--- | Returns new Parser which specifies default values for object's JSON fields.
+-- | Returns new parsing function which will use the specified 'Pair's as
+-- default values for the data type being decoded's fields.
 withDefaults :: (Value -> Parser a) -> [Pair] -> Value -> Parser a
 withDefaults parser defs js@(Object _) = parser (js <+> object defs)
 withDefaults _ _ _ = empty

@@ -71,7 +71,6 @@ mkAllInsts name = fmap concat $ mapM ($ name) [monoidInst, toJSONInst, fromJSONI
 toJSONInst :: Name -> Q [Dec]
 toJSONInst name =
     [d| instance ToJSON $( conT name ) where
-            toJSON = genericToJSON $ mkEncodingOptions name
             toEncoding = genericToEncoding $ mkEncodingOptions name
       |]
 
