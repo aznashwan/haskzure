@@ -6,7 +6,7 @@
 % ---
 \usepackage{utils}
 
-\usepackage[utf8]{inputenc} % Unicode support (Umlauts etc.)
+\usepackage[utf8x]{inputenc} % Unicode support (Umlauts etc.)
 \usepackage[english]{babel} % Change hyphenation rules
 \usepackage{graphicx} % Add pictures to your document
 \usepackage[pdfpagelabels]{hyperref} % Add a link to your document
@@ -23,11 +23,58 @@
 
 \begin{document}
 
+\begin{titlepage}
+\begin{center}
+
+    \begin{figure}[!htb]
+        \begin{minipage}{0.16\textwidth}
+            \includegraphics[width=\linewidth]{images/logo_ac.jpg}
+        \end{minipage}\
+
+        \begin{minipage}{0.5\textwidth}
+            Facultatea de Automatică și Calculatoare \newline
+            Programul de Licență: \newline
+            Calculatoare şi tehnologia informaţiei
+        \end{minipage}\
+
+        \begin{minipage}{0.3\textwidth}
+            \includegraphics[width=\linewidth]{images/logo_upt.jpg}
+        \end{minipage}
+    \end{figure}
+
+    \vspace*{80px}
+
+    {\Huge Haskzure}\\[4mm]
+    {\Large \textit{Azure Resource Manager Bindings in Haskell}}\\
+
+    \vspace{10mm}
+
+    {\textsc Lucrare de licență} \\[3cm]
+
+    \begin{flushright}
+        \large Nashwan Azhari \\[1cm]
+    \end{flushright}
+    \begin{flushleft}
+        \large
+            \emph{Conducător științific} \\
+            conf. dr. ing. Marius Minea \\[1cm]
+    \end{flushleft}
+
+    \vfill
+    {\large {Timișoara \\June, 2016}}
+
+\end{center}
+\end{titlepage}
+
+\date{\today{}}
+\title{Haskzure: Bibliotecă de Haskell pentru Azure Resource Manager}
+\author{Nashwan Azhari}
+\maketitle
+
 \date{\today{}}
 \title{Haskzure: Azure Resource Manager bindings in Haskell}
 \author{Nashwan Azhari}
-
-\maketitle{}
+\maketitle
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Abstract:
 \begin{abstract}
@@ -65,13 +112,13 @@ IT workloads (infrastructure, storage arrays, big data processing etc..) `into
 the cloud'. Whilst many choose to invest in their own datacenters and build
 an in-house \textit{private cloud} solution, the vast majority prefer to turn
 to so-called \textit{public clouds} for hosting all of their IT needs. As such,
-the private cloud business is one of the most fast-growing industries in the
+the public cloud business is one of the most fast-growing industries in the
 field, with huge names such as Amazon's AWS, Microsoft's Azure and Google's
 Compute Engine offering a vast selection of both cloud infrastructure elements
 and services to anyone in need. \newline
 With this stunning growth in the industry and the shift to even more distributed
 application architectures born to run in the cloud, the traditional model of a
-company hiring a handful of system administrators to managed their
+company hiring a handful of system administrators to manage their
 infrastructure and application lifecycle needs is no longer a feasible one.
 As the cloud became a solution to programatically configuring IT
 infrastructure, so, now, must there be a solution for configuring the clouds.
@@ -138,7 +185,7 @@ choice of Microsoft itself to almost fully auto-generate all of their libraries
 through means detailed later. We have chosen, however, to use the levels of
 abstraction provided by the Haskell language to move the boundary of code
 generation farther away by hand-writing a core set of functionalities which are
-designed to be as generic as possible and only generating the static datastructures
+designed to be as generic as possible and only generating the static data structures
 those core operations operate upon.
 
 \newpage
@@ -168,7 +215,7 @@ The functional programming style has long been considered relatively cumbersome
 due to its avoidance to mutable state and side-effects. As such, many have
 argued that the cost of complete purity (in the mathematical sense, applied to
 functions) far outweighs its benefits, and thus purely functional languages
-will never actually be `useful'. Haskell manages to maintain purity throughout
+will never actually `be useful'. Haskell manages to maintain purity throughout
 by employing a number of `functional design patterns' (most ideas having been
 borrowed from the field of \textit{Category Theory}), to deal with the likes of
 mutable state and I/O while maintaining purity.\newline
@@ -180,14 +227,14 @@ is very concise in the  modelling and management of cloud infrastructure.
 
 Haskell is a statically typed language, with one of its main virtues being
 its expressive type system. It is a system designed around
-\textit{Algebraic Datatypes} (or ADTs), and \textit{typeclasses}, which
+\textit{Algebraic Data Types} (or ADTs), and \textit{typeclasses}, which
 define type-level constraints on the said ADTs. The system is very minimal
 at heart, but it however allows for almost all of the diverse types,
 constraints and their combinations which comprise the concise yet flexible
 standard libraries. \newline
 In addition, there are a handful of compiler extensions which either allow for
 some added behavior to the typeclass system (MultiParamTypeClasses,
-FlexibleContexts\ldots), or some extending of the datatype system (ex:
+FlexibleContexts\ldots), or some extending of the data type system (ex:
 DataKinds, TypeFamilies, GADTs etc\ldots). Although not part of the official standard,
 most of the compiler extensions come packaged with GHC and enjoy widespread
 use due to their added value to the language. When detailing the
@@ -245,7 +292,7 @@ Haskell's case, metaprogramming features come in the form of \textit{Template
 Haskell}, a compiler extension and library which basically allow one to create
 typed `splices' and insert them into the AST of a module before it gets
 compiled. This allows for numerous use-cases, such as automatically declaring
-datatypes and instantiating them to specific typeclasses, which is one of the
+data types and instantiating them to specific typeclasses, which is one of the
 main drivers of Haskzure's implementation we will detail more in the next
 chapter.
 
@@ -299,8 +346,8 @@ few storage needs are also covered by the ARM APIs.
 The Azure Service Management (or ASM) API was the initial cloud management API
 for Azure since its launch in 2010. The API is RESTful, the means being XML
 payloads sent over HTTPS with authentication done via thumbprints of X.509
-certificates which had been pre-installed onto Azure and referenced in the
-application interacting with Azure.
+certificates which had been preinstalled onto Azure and referenced in the
+application.
 Back in its early days, Azure was leaning more towards a Platform as a
 Service-type system, with the main focus being on abstracting
 away as many details of the infrastructure as possible and allowing developers
@@ -338,7 +385,7 @@ being sent via HTTPS to the appropriate subpaths of the resource providers.
 \textit{OAuth2} is used as the authorization framework, with your application
 or Azure user having to be registered within an Azure \textit{Active
 Directory} which acts the \textit{authorization server} for all the OAuth2
-flows currently offered via Azure. \newline
+flows currently offered by Azure. \newline
 ARM's only real enforcement when it comes to the resources you're deploying is
 that they must all be allocated to a `Resource Group'. This is however nothing
 more that a matter of labelling, as all resources may freely communicate with
@@ -349,13 +396,13 @@ them in bulk (like deleting all the resources in a group, for example\ldots).
 As an added feature, the top-level `Resource Manager' provider offers the
 ability to deploy a resource group by providing the JSON-encoded configuration
 of all the resources desired in it, exactly as happens in the case Amazon's
-Cloud Formation (CFN) or OpenStack's Heat. Despite its handiness though, this
+Cloud Formation or OpenStack's Heat. Despite its handiness though, this
 `template deployment' mode of operation cannot be really considered a complete
 orchestration solution, as its main purpose is just deploying the resources,
 after which no added management/monitoring is done. Of interest, however, is
 the fact that the format of the resources encoded as JSON is almost identical
-with the one thorugh which we interact with the APIs, further proving that the
-Resource Manager API is nothing more than a union of those from the individual
+with the one through which we interact with the APIs, further proving that the
+Resource Manager API is nothing more than a union of those of the individual
 resource providers.
 
 \section{Building an ARM Client Library}
@@ -373,15 +420,28 @@ allow for easy implementation of authorization within applications without the
 explicit need of users to provide username and password credentials to them. In
 the case of ARM, Azure Active Directory resources play the role of the
 \textit{authorization server} in all the supported OAuth2 flows. \newline
-In essence, one must register their application within an instance of Azure
-Active Directory under his/her subscription (a straightforward process done
-via the Azure online user interface), after which they will be
-communicated the `client ID' and `client secret' with which their application
-may solicit a temporary access token for use in authorization when actual calls
-to manage ARM resources are made. The scenario presented above falls under what
-is known as the `client credentials grant', in which an HTTP URL-encoded POST
-is performed on the authentication endpoint as shown in \autoref{listing:tokenRequest}.
-% TODO: put oauth2 client creds flow graph here.
+The following is a list of the OAuth2 authorization methods available against Azure AD:
+
+\begin{itemize}
+    \item{`Authorization Code' grant:} an authorization method in which the user
+        of the application/service is redirected to Azure AD for
+        authentication, after which Azure passes the application the
+        authorization token via an application callback URL
+    \item{`Client Credentials' grant:} this method requires that the application
+        (i.e.\ the `client'), be previously registered within the authorization
+        server, with access rights predefined and a given `client ID' and
+        `client secret' (passkey) to be used for it to fetch its own
+        authorization token
+    \item{`Resource Owner Password Credentials' grant:} this method relies on
+        the user handing the application his/her own credentials and the
+        application (which needs to be previously registered with an associated
+        `client ID' and permissions), and the application then authenticates
+        with the owner's credentials to be granted a token
+\end{itemize}
+
+The scenario we will focus on is the `Client Credentials' grant, in which an
+HTTP URL-encoded POST is performed on the authentication endpoint as shown
+in \autoref{listing:tokenRequest}. \newpage
 
 \begin{lstlisting}[
         caption={OAuth2 token request example},
@@ -426,7 +486,7 @@ authorization response is presented in \autoref{listing:tokenResponse}.
 The ARM APIs are fully REST-compliant with all interactions done via HTTP\@. Each
 particular resource type has its own URL at which HTTP requests may be
 performed to issue certain actions. The general format of the resource URLs is
-listed in \autoref{listing:urlFormat}.
+presented in \autoref{listing:urlFormat}.
 
 \begin{lstlisting}[
         caption={URL format of an ARM resource on Azure},
@@ -656,7 +716,7 @@ found in \autoref{listing:availabilitySetCreateSwagger}.
 This excerpt has been partially reformatted and some auxiliary details
 have been left out (such as the `description' fields of each of the
 parameters), but the rest is factually accurate. Also of note is that the
-actual schema for the structure of the request body is as reference to
+actual schema for the structure of the request body is merely a reference to
 its respective definition within the schema (`\#/definitions/AvailabilitySet'),
 which coincides with the structure presented in \autoref{listing:availabilitySetJSON}.
 
@@ -684,7 +744,7 @@ basic set of principles:
         authentication, basic wrappers of the standard HTTP library from the
         language in question, and abstract base classes to inherit from later if
         in an Object-Oriented setting)
-    \item{} use the Swagger description to generate the types/datastructures
+    \item{} use the Swagger description to generate the types/data structures
         which represent the transmission payloads (these are often referred to
         as the `models' and implement some generic interfaces for
         serialization/deserialization to/from JSON)
@@ -700,6 +760,30 @@ which usually carries the file extension `cshtml'. The specific details of the
 generated code are filled into the Razor template programatically and results
 in the client library code.
 
+Below is the basic architectural overview of an AutoRest-generated client
+library in \autoref{listing:defaultClientLibraryArchitecture}.
+
+\begin{listing}[H]
+\caption{Architectural overview of AutoRest-generated client libraries.}
+\label{listing:defaultClientLibraryArchitecture}
+\begin{center}
+    \begin{tabular}{ | p{7.5cm} | }
+        \hline
+        \textbf{auto-generated }code:
+        \begin{itemize}
+            \item{} glue logic
+            \item{} operations
+            \item{} type definitions
+        \end{itemize} \\
+        \hline
+        simple wrappers (HTTP, JSON, OAuth2) \\
+        \hline
+        native libraries \\
+        \hline
+    \end{tabular}
+\end{center}
+\end{listing}
+
 \subsubsection{Disadvantages of Code Generation}
 
 Whilst code generation does bring the advantage of mediating all of the
@@ -713,7 +797,36 @@ were many cases where the AutoRest system and even the Swagger specifications
 themselves had to be retroactively refactored in order to better facilitate
 support for each language in part. Even nowadays updates to the specification
 still uncover some bugs in AutoRest which lead to the libraries being sub-par.
-\newline
+In \autoref{listing:pythonLibraryFailure}, you may see a simple example of a
+situation where the code generation engine for the Python client library
+completely disregards a key-value argument.
+
+\begin{listing}[H]
+\caption{Python client library generation mishap.}
+\label{listing:pythonLibraryFailure}
+\begin{minted}{python}
+def __init__(self, id=None, load_balancer_backend_address_pools=None,
+        load_balancer_inbound_nat_rules=None, private_ip_address=None,
+        private_ip_allocation_method=None, public_ip_address=None,
+        provisioning_state=None, name=None, etag=None, **kwargs):
+    super(NetworkInterfaceIPConfiguration, self).__init__(id=id, **kwargs)
+    self.load_balancer_backend_address_pools = load_balancer_backend_address_pools
+    self.load_balancer_inbound_nat_rules = load_balancer_inbound_nat_rules
+    self.private_ip_address = private_ip_address
+    self.private_ip_allocation_method = private_ip_allocation_method
+    # NOTE: the kwarg is ignored and 'subnet' field
+    # gets consistently set to None here:
+    self.subnet = None
+    self.public_ip_address = public_ip_address
+    self.provisioning_state = provisioning_state
+    self.name = name
+    self.etag = etag
+\end{minted}
+\end{listing}
+
+More details on the particular issue listed above can be found on the Github
+issue tracker for the Python SDK \cite{pythonSDKIssue}.
+
 Secondly, the code generated by AutoRest can be extremely hard to read and
 understand, as the intricacies of generated code are very hard to reason about
 upon just examining the results. This is most apparent in the case of the
@@ -723,37 +836,774 @@ operations. This problem is so pronounced it is even recommended that people
 turn to reading the Swagger specification directly to understand the operations
 they are using instead of turning to the code itself. \newline
 These issues prompted us to use the Swagger specification as
-little as possible and instead use Haskell's abstraction mechanisms to write generic
-code which can be reused across almost all API calls.
+little as possible and instead use Haskell's abstraction mechanisms to write
+generic code which can be reused across almost all API calls.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Implementation:
 \chapter{Haskzure's implementation}
 
-\section{The Library's interface} % 2
-    % short build-up to the next section's contents:
-        % both low-level function and data structure access
-        % high-level monadic API
+In the following we will provide all the relevant implementation details for
+Haskzure as well as motivate the general design decisions which were taken.
 
-%%% NOTE: likely to be dropped:
-\section{Base Typeclasses}
-    % the AzureResource Typeclass: motication and functioning
-    % the Resource and Subresource data structures
+\section{Haskzure's design}
 
-\section{Generating the data structures from Swagger} % 3 pages
+As opposed to the way Microsoft has taken to auto-generating a large portion of
+the codebase of the client libraries as described in the section on Azure
+AutoRest, one of the main purposes of Haskzure was avoiding code generation
+as much as feasibly possible. \newline
+In a nutshell, Haskzure can be viewed as a layered system with the general
+architecture presented in \autoref{listing:haskzureArchitecture}.
+
+\begin{listing}[H]
+\caption{Architectural overview of Haskzure.}
+\label{listing:haskzureArchitecture}
+\begin{center}
+    \begin{tabular}{ | p{7.5cm} | }
+        \hline
+        high-level monadic API \\ \hline
+        glue logic \\ \hline
+        generic operations \\ \hline
+        \textbf{auto-generated}: data type definitions \\ \hline
+        native libraries \\ \hline
+    \end{tabular}
+\end{center}
+\end{listing}
+
+As can be seen, code generation has been limited solely to the generation of
+the data types representing Azure resources, with all the layers above it being
+parametrically polymorphic with respect to specific type of resource they are
+manipulating thanks to the design of the `Resource' ADT outlined in the next
+section. This allows for a much more robust system, with the entirety of the
+code directly interacting with Azure being hand-written.
+
+\section{Generating the Resource Data Structures} % 3 pages
     % parsing the Swagger:
         % How the Azure folks' format is non-standard and imparseable
         % How i worked around this by processing the JSON myself (credit Aeson)
     % Template Haskell data structure and instance declarations for the above
 
-\section{Details on the implementation of Authentication} % 2 pages
+% TODO: details about template Haskell.
+
+In the following section, we will describe in detail all the steps taken from
+Swagger definition to Haskell data structure. For this purpose, the
+`Availability Set' Azure resource was chosen for its simplistic structure and
+the ease of demonstration it provides.
+
+\section{Base Resource Types}
+
+The first logical step towards abstraction is, of course, the factoring out of
+common behavior. In order to facilitate abstraction of the resource attributes
+shared among all resource definitions, Swagger permits the usage of a special
+\texttt{allOf} field which denotes the `inclusion' of all of the properties in
+the referenced schema into the referencing one. For example, the whole
+definition of an `Availability Set' is shown in
+\autoref{listing:availabilitySetSwagger}.
+
+\begin{listing}[H]
+\caption{Swagger definition of an Availability Set.}
+\label{listing:availabilitySetSwagger}
+\begin{minted}{json}
+"AvailabilitySet": {
+    "properties": {
+        "properties": {
+            "x-ms-client-flatten": true,
+            "$ref": "#/definitions/AvailabilitySetProperties"
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "#/definitions/Resource"
+        }
+    ],
+}
+\end{minted}
+\end{listing}
+
+As may be noticed from the above excerpt, the Azure team encapsulated the
+common properties shared among all Azure resource types in a single, so-called
+`Resource' definition. The remaining resource-specific properties are also
+defined separately in a schema with the same name of the resource type but
+with `Properties' appended to it, which we will discuss more thoroughly in the
+next next section.
+
+The exact structure of the common properties of defined in the base
+Resource may be seen in \autoref{listing:resourceSwagger}
+
+\begin{listing}[H]
+\caption{Swagger definition of the base `Resource' type.}
+\label{listing:resourceSwagger}
+\begin{minted}{json}
+"Resource": {
+    "properties": {
+        "id": {
+            "readOnly": true,
+            "type": "string"
+        },
+        "name": {
+            "readOnly": true,
+            "type": "string"
+        },
+        "type": {
+            "readOnly": true,
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        },
+        "tags": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "string"
+            }
+        }
+    },
+    "x-ms-azure-resource": true
+}
+\end{minted}
+\end{listing}
+
+\newpage
+
+From the definition of the base Swagger Resource, we may conclude that the
+following fields are shared among all resources:
+
+\begin{itemize}
+    \item{} the resource ID, which, as mentioned, uniquely identifies resources
+        by virtue of the full resource path following the base host of the URL
+        we are making API calls to
+    \item{} the simple name of the resource
+    \item{} the resource's type, which is formed by joining the type of the
+        resource with the resource provider in charge of it (for example
+        `Microsoft.Network/virtualNetworks' for virtual network resources)
+    \item{} the normalized Azure location the resource is located at
+    \item{} additional key-value pairs representing tags for easy custom
+        categorising of resources
+\end{itemize}
+
+This way of defining resource types as a Swagger `mixin' is something done
+consistently throughout all of the ARM Swagger specifications, with the
+properties specific to the resource in question being defined as a separate
+entity each time. Based on this simple specification, we may go ahead and
+define the base `Resource' ADT of our library, shown in
+\autoref{listing:resourceHaskell}.
+
+\begin{listing}[H]
+\caption{Definition of Haskzure's base `Resource' type.}
+\label{listing:resourceHaskell}
+\begin{minted}{haskell}
+data Resource a = Resource {
+    -- | resID is the ID of the Resource:
+    resID         :: String,
+
+    -- | resName is the Name of the Resource:
+    resName       :: String,
+
+    -- | resGroup is the Name of the Resource Group in which the 'Resource' lives.
+    resGroup      :: String,
+
+    -- | resLocation is the Location of the Resource:
+    resLocation   :: String,
+
+    -- | resType is the Type of Resource:
+    resType       :: String,
+
+    -- | resProperties are the properties of the Resource:
+    resProperties :: a
+} deriving (Show)
+\end{minted}
+\end{listing}
+
+Of special note is the type of the `resProperties' field. The `Resource'
+data type is parametrically polymorphic with regards to the properties it
+contains, no matter the resource type for which those may be. This will allow
+for the base functions to be generic with regards to the resource type they
+are operating on as will be outlined in a later section. Additionally, we have
+defined a `resGroup' field for conveniently specifying the resource group in which
+the resource in question has been deployed.
+
+\subsection{Generating Resource Properties Data Types}
+
+As seen in the architectural overview presented in
+\autoref{listing:haskzureArchitecture}, the only code generated based on the
+Swagger specification is that of the definitions of the data structures
+representing the properties of a resource on Azure. These are the data structures
+which will later be directly serialized/deserialized to/from the payloads of
+all the HTTP interactions with ARM. \newline
+
+The basic outline for data type generation based on the Swagger definition of a
+`model' can be summarized as follows:
+
+\begin{itemize}
+    \item{} the resulting data type will have the same name as the Swagger
+        definition, but with the `Properties' tag removed
+    \item{} the resulting data type will have a single value constructor, whose
+        name coincides with that of the data type in accordance with Haskell
+        idioms
+    \item{} the resulting value constructor will be of record type, with all of
+        the fields representing each attribute in the Swagger definition
+    \item{} each field's label features as a prefix the name of the data type so
+        as to avoid naming collisions throughout the generated code
+\end{itemize}
+
+Following the above rules, we may now perform a simple case study on a sample
+resource type, namely the `Availability Set' resource we have presented in
+\autoref{listing:availabilitySetSwagger}. The Swagger definition of the
+`AvailabilitySetProperties' of can be found in
+\autoref{listing:availabilitySetPropertiesSwagger}.
+
+\begin{listing}[H]
+\caption{Swagger definition for the properties of an Availability Set.}
+\label{listing:availabilitySetPropertiesSwagger}
+\begin{minted}{json}
+"AvailabilitySetProperties": {
+    "properties": {
+        "platformUpdateDomainCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Gets or sets Update Domain count."
+        },
+        "platformFaultDomainCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Gets or sets Fault Domain count."
+        },
+        "virtualMachines": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/SubResource"
+            }
+        }
+    },
+}
+\end{minted}
+\end{listing}
+
+The above Availability Set properties will result in the generation of a
+data structure with the formal definition shown in
+\autoref{listing:availabilitySetHaskell}.
+
+\begin{listing}[H]
+\caption{Generated Haskell definition of an Availability Set.}
+\label{listing:availabilitySetHaskell}
+\begin{minted}{haskell}
+data AvailabilitySet = AvailabilitySet {
+    availabilitySetPlatformUpdateDomainCount :: Int,
+    availabilitySetPlatformFaultDomainCount :: Int,
+    availabilitySetVirtualMachines :: [SubResource]
+ } deriving (Show, Eq)
+\end{minted}
+\end{listing}
+
+As one might imagine, the level of technical risk undertaken in the generation
+of simple data structures is relatively small one, as opposed to the generation
+of a lot of code with an associated logic to it. Considering the limited scope
+of these data structure definitions with regards to the scope of the whole
+project, it is easy to deduce the benefits of only extracting the data
+definitions from the Swagger specification.
+
+\subsection{Generating Serialization Instances}
+
+Once the generation of a data structure representing the properties of a
+resource has been performed, we must then provide instance implementations for
+all of the typeclasses required in order to succesfully use said data structure
+in interactions with Azure. Most notable are the typeclasses required to be
+implemented by  \textit{Aeson} (a Haskell library for working with JSON-encoded
+data), namely ToJSON and FromJSON, as well as an instance for the Monoid
+typeclass which is commonly used in Haskell.
+
+\subsubsection{ToJSON}
+
+ToJSON is the Aeson typeclass implemented by all types which are serializable
+to JSON. Its definition is very simplistic at heart and can be seen in
+\autoref{listing:ToJSONHaskell}.
+
+\begin{listing}[H]
+\caption{Definition of Aeson't ToJSON typeclass.}
+\label{listing:ToJSONHaskell}
+\begin{minted}{haskell}
+class ToJSON a where
+    toJSON     :: a -> Value
+    toEncoding :: a -> Encoding
+\end{minted}
+\end{listing}
+
+We may see the existence of two main functions defined within the ToJSON
+typeclass. \texttt{toJSON}, the first, is a function which takes a value
+of the type in question and returns a value of type \texttt{Value}, a type
+defined in the Aeson library which has its own ToJSON instance.
+\texttt{toJSON} may thus be viewed as a function which encodes to JSON in two
+separate steps by first `transcoding' the value of the given type into one of
+type \texttt{Value}, which is then later actually serialized to JSON\@.
+The other, \texttt{toEncoding}, is the more efficient variant, it taking a
+value of the type in question and encoding it directly to JSON\@. By default, a
+generic \texttt{toEncoding} which makes use of \texttt{toJSON} is used if only
+the latter is provided.  Of course, the preferred option would be making use
+of \texttt{toEncoding} for all of our serialization needs in order to reap
+the added performance benefits. \newline
+Fortunately, Aeson includes helper functions for making both a \texttt{toJSON}
+and a \texttt{toEncoding} function provided the type we are instantiating is an
+instance of a Haskell typeclass called \texttt{Generic}, which, even more
+fortunately for us, is also automatically derivable with the language
+extension `DeriveGeneric' available in GHC\@. The signature of
+\texttt{genericToEncoding}, the function which, when partially applied to a set
+of encoding \texttt{Options} results in the definition of \texttt{toEncoding}
+we desire, is shown in \autoref{listing:genericToEncodingHaskell}.
+
+\begin{listing}[H]
+\caption{Signature of Aeson's \texttt{genericToEncoding}.}
+\label{listing:genericToEncodingHaskell}
+\begin{minted}{haskell}
+genericToEncoding :: (Generic a, GToEncoding (Rep a)) => Options -> a -> Encoding
+\end{minted}
+\end{listing}
+
+The next problem we were faced with was the proper choosing of the encoding
+\texttt{Options} for our purposes. Recall that when we generated the properties
+data structures, we intentionally prepended the name of the data type in order to
+avoid naming collisions. As such, we must take care to choose the correct
+encoding options which will lead to the field prefix being removed
+when serializing to JSON\@. Furthemore, the options shall be clearly dependand on
+the name of the data type, and thus a custom set of them must be created for
+every data type we want to instantiate to ToJSON\@. The code snippet outlining the
+process of generating the resource-specific \texttt{Options} can be seen in
+\autoref{listing:mkEncodingOptionsHaskell}.
+
+\begin{listing}[H]
+    \caption{The Aeson encoding \texttt{Options} used.}
+\label{listing:mkEncodingOptionsHaskell}
+\begin{minted}{haskell}
+baseAesonOptions :: Options
+baseAesonOptions =  Options {
+    fieldLabelModifier = id,
+    constructorTagModifier = id,
+    allNullaryToStringTag = True,
+    omitNothingFields = True,
+    sumEncoding = defaultTaggedObject,
+    unwrapUnaryRecords = False
+ }
+
+mkFieldLabelPrefixRemoveModifier :: Name -> String -> String
+mkFieldLabelPrefixRemoveModifier n = lowerFirst . drop (length $ showName n)
+    where lowerFirst (c:cs) = toLower c : cs
+
+mkEncodingOptions :: Name -> Options
+mkEncodingOptions n = baseAesonOptions {
+    fieldLabelModifier = mkFieldLabelPrefixRemoveModifier n
+ }
+\end{minted}
+\end{listing}
+
+The exact selections for the options are motivated as follows:
+
+\begin{itemize}
+    \item{} fieldLabelModifier: a function which describes the transformation
+        to be applied to the labels of the data structure's fields. This is
+        where we create a custom function for each data structure using
+        \texttt{mkFieldLabelPrefixRemoveModifier}
+    \item{} sumEncoding: parameters on how to encode sum data types. Not
+        applicable to our case, as all of our generated data structures have a
+        single value constructor
+    \item{} constructorTagModifier: a function to be applied to the tags made
+        from the names of the value constructors. Not applicable so the identity
+        function \texttt{id} is used
+    \item{} allNullaryToStringTag: specifies whether to encode values of types
+        with all nullary value constructors (such as \texttt{Bool}) with just
+        the names of the constructors with \texttt{constructorTagModifier}
+        applied to them. Set to \texttt{True} for simple enum-like types
+    \item{} omitNothingFields: specifies wether to omit \texttt{Nothing} values
+        in case our fields are of type \texttt{Maybe a}. Not applicable, but
+        set to \texttt{True} for futureproofing
+    \item{} unwrapUnaryRecords: specifies whether or not to unrap the value of
+        a type with a single value constructor of record type, containing a
+        single record field (such as newtypes). Not applicable, set to the
+        default of \texttt{False}
+\end{itemize}
+
+With that, the full definition of the Template Haskell function
+\texttt{toJSONInst}, as well as a basic example of how it is used with the
+`AvailabilitySet' ADT, may be found in \autoref{listing:toJSONInstHaskell}.
+
+\begin{listing}[H]
+\caption{The \texttt{toJSONInst} Template Haskell function.}
+\label{listing:toJSONInstHaskell}
+\begin{minted}{haskell}
+toJSONInst :: Name -> Q [Dec]
+toJSONInst name =
+    [d| instance ToJSON $( conT name ) where
+            toEncoding = genericToEncoding $ mkEncodingOptions name
+      |]
+
+-- in a separate file:
+{-# LANGUAGE TemplateHaskell #-}
+
+toJSONInst ''AvailabilitySet
+\end{minted}
+\end{listing}
+
+\subsubsection{FromJSON}
+
+FromJSON is the Aeson typeclass representing data types deserializable from
+JSON\@. It contains a single member, namely \texttt{parseJSON}, as seen in
+\autoref{listing:FromJSONHaskell}.
+
+\begin{listing}[H]
+\caption{Aeson's FromJSON typeclass.}
+\label{listing:FromJSONHaskell}
+\begin{minted}{haskell}
+class FromJSON a where
+    parseJSON :: Value -> Parser a
+\end{minted}
+\end{listing}
+
+As we can see, \texttt{parseJSON} is polymorphic in its return type, as well as
+returning the value wrapped inside the \texttt{Parser} monad Aeson defines. As
+such, we must make use of Aeson't library functions in order to write our
+\texttt{parseJSON} definition, which effecively `decodes' an already parsed
+Aeson \texttt{Value} into the data structure of type `a'. Fortunately, there is
+also a \texttt{genericParseJSON} available for use, which has the signature
+presented in \autoref{listing:genericParseJSONHaskell}.
+
+\begin{listing}[H]
+\caption{Aeson's FromJSON typeclass.}
+\label{listing:genericParseJSONHaskell}
+\begin{minted}{haskell}
+genericParseJSON :: (Generic a, GFromJSON (Rep a)) => Options -> Value -> Parser a
+\end{minted}
+\end{listing}
+
+With the above, and provided the same set of \texttt{Options} we used to create
+the \texttt{toEncoding} function (Aeson performs a `lookup' when decoding, so
+the same \texttt{Options} used the encode the fields are the ones needed to see
+how to expect the fields to be encoded), we may easily define
+\texttt{parseJSON}. \newline
+More interesting, however, is what happens when some fields of the
+data structure are not present in the payload being decoded. In this case,
+Aeson's default behavior is to throw an error which leads to a program crash.
+To prevent stability issues and provide sensible defaults for empty fields when
+decoding, we must implement our own fallback mechanism. This is illustrated in
+\autoref{listing:withDefaultsHaskell}.
+
+\begin{listing}[H]
+\caption{\texttt{withDefaults} Parser merging function.}
+\label{listing:withDefaultsHaskell}
+\begin{minted}{haskell}
+-- | Merges two Aeson 'Value's via 'Map' 'Monoid' instance.
+(<+>) :: Value -> Value -> Value
+Object x <+> Object y = Object (x <> y)
+_ <+> _ = error "<+>: merging non-objects"
+
+-- | Returns new parsing function which will use the specified 'Pair's as
+-- default values for the data type being decoded's fields.
+withDefaults :: (Value -> Parser a) -> [Pair] -> Value -> Parser a
+withDefaults parser defs js@(Object _) = parser (js <+> object defs)
+withDefaults _ _ _ = empty
+\end{minted}
+\end{listing}
+
+As can be seen, \texttt{withDefaults} employs the Monoid instance of Map (which
+is used in the underlying definition of Aeson \texttt{Value} type), to unify the
+object getting parsed with an object containing a list of pairs of field names
+and the respective default value. The union of the parsed and default objects
+occurs before the parsing into the destination data structure.
+As mentioned, the default object is constructed from the list of Aeson
+\texttt{Pair}s within which we must refer to fields with the same
+name we'd expect them to be found in the JSON payload (in
+this case, without the data type name prefix we put on all record fields). This
+is done through the Template Haskell function \texttt{mkFromJSONPairs} whose
+implementation we won't detail. Either way, \texttt{mkFromJSONPairs} is the
+main driver for the \texttt{fromJSONInst} Template Haskell function whose
+expected outcome for the `AvailabilitySet' resource type shown in
+\autoref{listing:availabilitySetHaskell} should be consistent with the one
+presented in \autoref{listing:availabilitySetFromJSONInstanceHaskell}.
+
+\begin{listing}[H]
+\caption{AvailabilitySet FromJSON instance.}
+\label{listing:availabilitySetFromJSONInstanceHaskell}
+\begin{minted}{haskell}
+instance FromJSON AvailabilitySet where
+    parseJSON = (genericParseJSON (mkEncodingOptions "AvailabilitySet")
+                `withDefaults` [
+                    ("platformUpdateDomainCount" .= (mempty :: Int)),
+                    ("platformFaultDomainCount" .= (mempty :: Int)),
+                    ("virtualMachines" .= (mempty :: [SubResource]))
+                ]) :: (Value -> Parser AvailabilitySet)
+\end{minted}
+\end{listing}
+
+All of the default values supplied are actually the result of calling
+\texttt{mempty} from the Monoid class for the respective type of the
+field. The exact details of how \texttt{fromJSONInst} is implemented are beyond
+the scope of this writing, but instead may be found better documented in the
+Haddock documentation of Haskzure.
+
+\subsubsection{Monoid}
+
+Monoid instances for the resource data types serve two main purposes:
+
+\begin{itemize}
+    \item{} they are required in the case of nested Azure resources in order
+        for their \texttt{mempty} to be used in the FromJSON instantiations as
+        has been outlined in
+        \autoref{listing:availabilitySetFromJSONInstanceHaskell}
+    \item{} they are generally useful for both: \begin{itemize}
+        \item{} making default empty values of the resources data types which
+            may then be updated with what the desired characteristics are
+        \item{} taking two resource configurations and \texttt{mappend}ing them
+            together
+    \end{itemize}
+\end{itemize}
+
+These instances are made using the facilities of the \texttt{generic-deriving}
+\cite{packageGenericDeriving} package with the same constraint of the data type
+needing to be an instance of \texttt{Generic} still applying. The full
+definition of the \texttt{monoidInst} Template Haskell function is outlined
+in \autoref{listing:monoidInstHaskell}.
+
+\begin{listing}[H]
+\caption{The \texttt{monoidInst} Template Haskell function.}
+\label{listing:monoidInstHaskell}
+\begin{minted}{haskell}
+monoidInst :: Name -> Q [Dec]
+monoidInst name =
+    [d| instance Monoid $( conT name ) where
+            mempty = memptydefault
+            mappend = mappenddefault
+      |]
+\end{minted}
+\end{listing}
+
+As can be observed, we rely on \texttt{memptydefault} and
+\texttt{mappenddefault} in our Monoid instance, which provide sensible default
+implementations for data structures which are instances of \texttt{Generic}.
+\newline
+Finally, we may quickly and easily create a function which dispatches to the
+Template Haskell functions for creating instances for both ToJSON and FromJSON,
+as well as the Monoid one. The resulting function is the one used on all of the
+data types which were generated in the previous layer, and may be see in
+\autoref{listing:mkAllInstsHaskell}.
+
+\begin{listing}
+\label{listing:mkAllInstsHaskell}
+\caption{Definition of the \texttt{mkAllInsts} Template Haskell function.}
+\begin{minted}{haskell}
+mkAllInsts :: Name -> Q [Dec]
+mkAllInsts name = fmap concat $ mapM ($ name) [monoidInst, toJSONInst, fromJSONInst]
+\end{minted}
+\end{listing}
+
+\section{OAuth2 Authorization} % 2 pages
     % describe AzAD app permissions setup
     % oauth2 details
     % code samples for token refreshing etc...
 
-\section{The low-level functions} % 2 pages
-    % simply unifying the base types/typeclasses and the authentication parts
-    % will offer generic function useful for people in general...
+With the resource data structures defined, we may now focus on the
+\textit{OAuth2} authorization. Regardless of the authorization flow used,
+the response should be the same and consistent with the structure
+shown in Chapter 2 in \autoref{listing:tokenResponse}. As mentioned, in Haskzure
+specifically, the only currently supported OAuth2 flow is the `Client
+Credentials flow'.
+
+\subsection{The Credentials ADT}
+
+Presuming Haskzure has been properly setup within an instance of Azure
+Active Directory (a straightforward process done via the Azure online user
+interface), the set of information required in order to succesfully
+authenticate using the `Client Credentials' OAuth2 flow against Azure AD has
+been aggregated into a data structure named \texttt{Credentials}, whose
+definition can be found in \autoref{listing:credentialsHaskell}.
+
+\begin{listing}[H]
+\label{listing:credentialsHaskell}
+\caption{Haszure's \texttt{Credentials} ADT.}
+\begin{minted}{haskell}
+data Credentials = Credentials {
+    tenantId       :: BS.ByteString,
+    clientId       :: BS.ByteString,
+    subscriptionId :: BS.ByteString,
+    clientSecret   :: BS.ByteString
+ } deriving Show
+\end{minted}
+\end{listing}
+
+The record fields of the \texttt{Credentials} ADT all play a part the
+authroization process, and namely:
+
+\begin{itemize}
+    \item{`tenantId'}: the unique ID of the Azure Active Directory against
+        which to authenticate, as will be presented later
+    \item{`clientId'}: unique ID number of the application (in this case
+        Haskzure). This is obtained when the application is registered within
+        the Azure AD
+    \item{`clientSecret'}: secret string to be used to authenticate the client.
+        This is automatically generated and also obtained when the application
+        is registered within the Azure AD
+    \item{`subscriptionId'}: the ID of the subscription under which the
+        operations will be performed
+\end{itemize}
+
+\subsection{The Token ADT}
+
+Considering the well-defined properties of an OAuth2 authorization token, we
+may go ahead and define the \texttt{Token} ADT to be used in all functions
+requiring authorization. Also considering that the response for succesfull
+token aquisition is the same (namely, the JSON structure presented in
+\autoref{listing:tokenResponse}), we also went ahead and declared a FromJSON
+instance for \texttt{Token} so as to be able to directly deserialize the token
+response into it. Both the definition of \texttt{Token} and its FromJSON
+instance may be found in \autoref{listing:tokenHaskell}.
+
+\begin{listing}[H]
+\label{listing:tokenHaskell}
+\caption{Haszure's \texttt{Token} ADT and its FromJSON instance.}
+\begin{minted}{haskell}
+data Token = Token {
+    token     :: BS.ByteString,
+    tokenType :: BS.ByteString,
+    expiresOn :: Integer
+ } deriving Show
+
+instance FromJSON Token where
+    parseJSON (Object o) = Token <$>
+                           o .: "access_token" <*>
+                           ((o .: "expires_on") >>=
+                               (return . (read :: String -> Integer))) <*>
+                           o .: "token_type"
+    parseJSON _ = fail "Token must be deserialized from a JSON object."
+\end{minted}
+\end{listing}
+
+\subsection{Token Fetching and Refreshing}
+
+As described in the Theoretical Overview chapter, the process of fetching a
+token for the `Client Credentials' OAuth2 grant is nothing more than performing
+a URL-encoded POST with the appropriate query parameters as shown in
+\autoref{listing:tokenRequest}. Thus the most crucial part is the correct
+forging of the query parameters by extracting what is required from the
+\texttt{Credentials} data structure. The exact process of creating the query
+parameters for the token request is shown in
+\autoref{listing:mkTokenParamsHaskell}.
+
+\begin{listing}[H]
+\label{listing:mkTokenParamsHaskell}
+\caption{\texttt{mkTokenRequestParams} query parameter builder function.}
+\begin{minted}{haskell}
+mkTokenRequestParams :: Credentials -> QueryParams
+mkTokenRequestParams creds = [
+    ("resource", "https://management.core.windows.net/"),
+    ("grant_type", "client_credentials"),
+    ("client_id", clientId creds),
+    ("client_secret", clientSecret creds)
+ ]
+\end{minted}
+\end{listing}
+
+Token requests must be directed to the OAuth2 path of the Azure AD's login URL
+(\url{https://login.microsoftonline.com/<tenant_id/oauth2/token}, where
+`tenant\_id' is the ID of the Azure AD instance we are authenticating against,
+thus the need for its supplying from the \texttt{Credentials} data structure).
+The rest of the process of actually performing the URL-encoded POST and
+deserializing the response s as straightforward as is to be expected.
+
+\subsection{Authorizing with the Token}
+
+After the \texttt{Token} has been succesfully recieved, using it for
+authorization involves nothing more than adding an HTTP header to all
+subsequent API calls. All encryption is performed by TLS (no ARM API calls
+may come through plain HTTP), so the real purpose of the OAuth2 token is to
+provide a verifiable sign of owning the necessary permission to perform the
+requested action. \newline
+In Haskzure, we made use of the \texttt{http-client}\cite{packageHTTPClient}
+\&co packages in which we have a \texttt{Request} data type which is
+manipulated in order to set various attributes of the upandcoming request.
+The operations required in order to set the appropriate request parameters
+may be found in \autoref{listing:authorizationHeaderHaskell}.
+
+\begin{listing}[H]
+\label{listing:authorizationHeaderHaskell}
+\caption{Necessary additions to the \texttt{Request} data type for authroization.}
+\begin{minted}{haskell}
+mkResourcePath :: String -> Resource a -> String
+mkResourcePath subId res = printf ((mkResourceTypePath subId res) ++ "/%s") (resName res)
+
+mkTokenHeader :: Token -> Header
+mkTokenHeader t = (hAuthorization, (tokenType t) `BS.append` " " `BS.append` (token t))
+\end{minted}
+\end{listing}
+
+Specifically, the above code adds a header with the key `Authorization', and
+the value `token\_type token', where the format parameters correspond to
+the type of the OAuth2 token as well as the token itself which are extracted
+from the \texttt{Token} data structure.
+
+\section{The Base Functions}
+
+With the data structures and token retrieval parts taken care of, the next
+logical layer of the library consists of the base functions which offer the
+basic set of functionality needed for interfacting with Azure. In a nutshell,
+the base set of functions include the Azure resource CRUD functions, as well as
+a handful others for performing specific operations on some resource types (like
+restarting a virtual machine, for example). In the following we will detail the
+building of the base operations layer.
+
+\subsection{Building the Resource Request URL}
+
+The first step of performing an ARM request is ensuring that the request is
+being made to the appropriate URL, as a lot of information is transmitted to
+the ARM APIs through the application path being accessed. Some details of
+the format of the ARM resource paths may also be found in the Technical Overview
+section in \autoref{listing:urlFormat}, which is duplicated below in
+\autoref{listing:urlFormat2}.
+
+\begin{lstlisting}[
+        caption={URL format of an ARM resource on Azure},
+        label={listing:urlFormat2}
+    ]
+https://management.azure.com/subscriptions/<subscription_id>
+      /resourceGroups/<resource_group_name>/providers/<provider_name>
+      /<resource_type>[/<resource_name>][/operation_name]
+\end{lstlisting}
+
+Of special interest this time is determining where all the parameters should be
+provided. The only required piece of information from the \texttt{Credentials}
+data structure is the `subscription\_id' path element, whilst all
+the rest of the elements may be directly extracted from the \texttt{Resource a}
+we are operating on (which also explains the need for the \texttt{resGroup}
+field of the Resource data type). \newline
+The exact implementation of the URL building process is trivial, involving
+nothing more that some smart string formatting.
+
+\subsection{Function Definitions}
+
+All of the base functions (\texttt{createOrUpdate}, \texttt{get},
+\texttt{delete}) follow the same general behavior outlined below:
+
+\begin{itemize}
+    \item{} fetch a fresh API token from Azure AD
+    \item{} build the request URL based on the parameters of the Resource being
+        operated upon
+    \item{} create the appropriate request body by serializing the provided
+        Resource (as is the case for \texttt{createOrUpdate}, for example)
+    \item{} perform the request to the appropriate URL over HTTPS
+    \item{} await the server's response, which may in some cases last minutes
+        depending on the scale of the request being performed
+    \item{} if needing to return something, properly deserialize the response
+        body into the required type
+\end{itemize}
+
+With that general methodology clear, the exact implementation details of the
+CRUD functions are unnecessary. Their signatures, however, may be found in
+\autoref{listing:baseFunctionsSignaturesHaskell}.
+
+\begin{listing}[H]
+\label{listing:baseFunctionsSignaturesHaskell}
+\caption{Signatures of the base functions for manipulating resources.}
+\begin{minted}{haskell}
+get            :: (FromJSON a) => Credentials -> Resource a -> IO (Resource a)
+createOrUpdate :: (ToJSON a) => Credentials -> Resource a -> IO ()
+delete         :: Credentials -> Resource a -> IO ()
+\end{minted}
+\end{listing}
 
 \section{The high-level interface} % 6 pages
     % should I explain the class Monad stack?
@@ -768,23 +1618,234 @@ code which can be reused across almost all API calls.
         % underlying structure will contain above mentioned info
         % (IO m, Logger m, Either m, State m) => AzureT m
 
+\chapter{Testing}
+
+There are two main areas testing should be focused: the data type and instance
+generating Template Haskell functions, as well as some integration tests
+which actually interact with Azure. \newline
+The data type and instance generation code is, albeit kept to a minimum, an
+important testing area as issues in the definition of the resource data types
+may lead to a host of problems, especially in the case of the Aeson typeclass
+instance generation functions. As such, Haskzure has a small suite of QuickCheck
+tests for validating that the instance generation code is performing as
+expected. \newline
+On the other hand, the are no fully-blown integration tests available, but a
+proposed solution of setting up an integration testing framework will be
+presented.
+
+\section{Validation of Instance Generation Code through QuickCheck}
+
+In this section, we will describe how validation of the instance generation
+code is performed using QuickCheck behavioral tests on mock data structures.
+We'd like to be able to test the generated code as thoroughly as
+possible to ensure encoding/decoding is done properly. In this sense, we may
+identify the following major aspects we'd expect of the generated definitions:
+
+\begin{itemize}
+    \item{} encoding and the decoding should yield a result identical to the
+        input data structure (encode/decode symmetry)
+    \item{} encode/decode symmetry should also apply if the type of a field of
+        a data structure is another Azure resource data structure
+\end{itemize}
+
+Whilst these may seem like properties which should be intrinsic to the Aeson
+library itself, the fact that the Template Haskell functions generating our
+ToJSON and FromJSON instances are parametrized over the name of the data type
+means that there may easily be some discrepancy between the encoding and
+decoding process which we'd like to actively test for. As an addded benefit,
+the testing of the Aeson instance generators also entitles testing the Monoid
+instance generator as will be seen later.
+
+\subsection{QuickCheck}
+
+QuickCheck is a Haskell library designed to facilitate property-based testing
+on randomly generated input. Most of QuickCheck's power is drawn from the
+ability to instantiate types to QuickCheck's \texttt{Arbitrary} typeclass in
+order to be able to test functions operating on values of that data type.
+The full definition of the \texttt{Arbitrary} typeclass may be found in
+\autoref{listing:arbitraryClassHaskell}.
+
+\begin{listing}[H]
+\label{listing:arbitraryClassHaskell}
+\caption{Definition of QuickCheck's \texttt{Arbitrary} typeclass.}
+\begin{minted}{haskell}
+class Arbitrary a where
+    arbitrary :: Gen a
+\end{minted}
+\end{listing}
+
+As may be noted, the return type of \texttt{arbitrary} is a value wrapped in
+QuickCheck's Gen monad within which arbitrary values are generated. It is
+usually straightforward to provide an \texttt{Arbitrary} instance for a data
+type, as you would just have to lift the value constructor into the Gen monad
+and apply it to \texttt{arbitrary} values of the types the data type is
+composed of.
+
+For the Availability Set data type listed in
+\autoref{listing:availabilitySetHaskell}, for instance, the \texttt{Arbitrary}
+instance would look something along the lines of what is shown in
+\autoref{listing:availabilitySetArbitraryHaskell}.
+
+\begin{listing}[H]
+\label{listing:availabilitySetArbitraryHaskell}
+\caption{\texttt{Arbitrary} instance for the AvailabilitySet data type.}
+\begin{minted}{haskell}
+instance Arbitrary AvailabilitySet where
+    arbitrary = AvailabilitySet <$>
+                    (arbitrary :: Int) <*>
+                    (arbitrary :: Int) <*>
+                    (arbitrary :: [SubResource])
+\end{minted}
+\end{listing}
+
+Fortunately, we may reuse some of the data type introspection code from the
+FromJSON instance generation Template Haskell function to write a new function
+which generates \texttt{Arbitrary} instances. More details on this helper
+function may be found by consulting the project's Haddock documentation.
+
+\subsection{Validating the Aeson Instance Generation}
+
+Provided an \texttt{Arbitrary} instance for our datatype, we can now write a
+simple QuickCheck property to ensure the symmetry of encoding and decoding. The
+property applicable to the Availability Set resource shown in
+\autoref{listing:availabilitySetHaskell} , which merely compares the result
+of applying Aeson's \texttt{endcode} and \texttt{decode} functions with the
+original AvailabilitySet value, can be seen in
+\autoref{listing:aesonSymmetryPropertyHaskell}.
+
+\begin{listing}[H]
+\label{listing:aesonSymmetryPropertyHaskell}
+\caption{QuickCheck property regarding symmetry of JSON encoding/decoding.}
+\begin{minted}{haskell}
+{-# LANGUAGE TemplateHaskell #-}
+
+arbiInst ''AvailabilitySet
+
+prop_AvailabilitySetAesonSymmetry :: AvailabilitySet -> Bool
+prop_AvailabilitySetAesonSymmetry :: d =
+    ((fromJust . (decode :: BSL.ByteString -> Maybe AvailabilitySet) . encode) d) == d
+\end{minted}
+\end{listing}
+
+To be frank, the data type we are testing against does not matter, as the
+desired property will be validated/invalidated just the same on a data type
+actually representing an Azure resource or on a dummy data type. What does
+matter, however, is the proper covering of the case of nested data types (in
+which the field of one type is of another complex data type). As such, among
+there are two tests in which dummy types, some nesting others, have
+the ToJSON and FromJSON instance generation functions used on them and a
+property similar to the one shown above defined for each of the data types.
+QuickCheck then randomly generates a set amount of values of said data types
+and verifies the property for each input and reports back the result.
+
+\subsubsection{Baseline Test}
+
+Naturally, the Aeson encode/decode symmetry property is entirely dependant on
+the implementation within the library to be valid. In order to verify that
+issues or not on Aeson't side, there is a side-test in which the same property
+is applied for Aeson's \texttt{Value} type for which an \texttt{Arbitrary}
+instance was written by hand. In the event there be some issue with Aeson's
+encode/decode operations, this regression-like check will properly alert to it.
+
+\section{Proposed Integration Testing Setup}
+
+Property-based testing is great when a need of certainty that a specific
+code behavior is consistently shown, however it does not guarantee that the
+property is compliant with what Azure expects. As such, the only real way to
+be sure that both the generated data types and their instances are correct is
+to actually attempt to interact with the ARM APIs. \newline
+The result would be the equivalent of an integration testing suite which may be
+ran periodically during Haskzure's lifecycle. The ideal target layer from the
+architectural overview presented in \autoref{listing:haskzureArchitecture}
+would the layer with the generic operations, as it is both the first layer to
+be directly interacting with Azure, as well as the layer where the granularity
+of operations is large (basically, at that layer each function has a direct
+correspondence to an HTTP method). \newline
+A good plan for the proposed integration testing suite would be as follows:
+
+\begin{itemize}
+    \item{} decide the set of properties for the tested operations (one for
+        creation, another for deletion etc\ldots). These should be paramterized
+        over the exact data type they are operating, as are the definition of
+        the base operation within the library
+    \item{} for each of the properties, write a Template Haskell function which
+        generates properties of that type provided the name of the
+        data structure representing the type of resource being tested
+    \item{} a list of data type names for which properties should be
+        generated and tested should be provided in order to start the testing
+        process knowing what is being tested
+\end{itemize}
+
+The creation of an integration testing suite is invaluable to ensuring
+Haskzure actually communicates cleanly with Azure, regardless of the exact
+implementation details.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Using the library:
 \chapter{Using the Library} % 2 pages
-    % fetching off github; building and including
-    % larger pieces of sample code
+
+\section{Installation and Importing}
+
+Haskzure may be easily installed using a combination of git and the cabal
+configuration management system. Having Haskzure installed is as simple as
+running the shell statement outlined in \autoref{listing:installingHaskzure}.
+
+\begin{lstlisting}[
+        caption={Shell commands for installing and configuring Haskzure.},
+        label={listing:installingHaskzure}
+    ]
+git clone https://github.com/aznashwan/haskzure &&
+    cd haskzure && cabal configure &&
+    cabal install
+\end{lstlisting}
+
+After installation, all of the following modules should be exposed and ready
+for importing:
+
+\begin{itemize}
+    \item{} \texttt{Cloud.Haskzure.Core} defines all of the core components of
+        Haskzure which present most of the library's functionality. This
+        includes:
+        \begin{itemize}
+            \item{} the \texttt{Credentials} and \texttt{Token} authorization
+                datatypes
+            \item{} the \texttt{getToken} function for fetching an
+                authorization token
+            \item{} the Resource and SubResource ADTs with all of their
+                constructors
+            \item{} the base set of operations, including the generic Azure
+                resource CRUD functions
+        \end{itemize}
+    \item{} \texttt{Cloud.Haskzure.Gen} defines all of the Template Haskell
+        code in charge with resource data type and instance generation
+        including:
+        \begin{itemize}
+            \item{} the \texttt{toJSONInst} and \texttt{fromJSONInst} Aeson
+                typeclass instance generators
+            \item{} the \texttt{monoidInst} Monoid instance generator
+            \item{} general Template Haskell utilities for data type
+                introspection with the purpose of creating instance definitions
+                (most notably \texttt{recordFieldsInfo})
+        \end{itemize}
+    \item{} \texttt{Cloud.Haskzure.Resources} contains the definitions of all
+        of the data types which represent resources on Azure (such as the
+        \texttt{VirtualNetwork} or \texttt{VirtualMachine} data types)
+\end{itemize}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Conclusions:
-\chapter{Conclusions} % 2 pages
-    % What have I learned and stuff?
-    % Future plans for the project
+\chapter{Conclusion}
 
+% TODO put LoC statistics
+
+The resulting system, whilst not having a scope as broad as the large
+auto-generated libraries Microsoft offers for other languages, unequivocally
+shows that simple abstraction features available in the language can go a long
+way into keeping the codebase small and maintainable. The conciseness achieved
+by limiting the amount of generated code just to data type declarations leads
+to much cleaner client library implementations in the long term.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Tools and Libraries:
-\chapter{Toolchain and Libraries Used}
-
-
+% \chapter{Toolchain and Libraries Used}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% References:
 \addcontentsline{toc}{chapter}{Bibliography and References}
