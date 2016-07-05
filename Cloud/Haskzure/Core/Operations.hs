@@ -3,7 +3,7 @@
 
 module Cloud.Haskzure.Core.Operations (
     createOrUpdate,
-    get
+    get, delete
     ) where
 
 
@@ -107,3 +107,17 @@ get creds res = do
     print $ responseBody resp
 
     return $ fromJust . decode $ responseBody resp
+
+
+-- | deletes the given Azure 'Resource' by issuing a DELETE request on
+-- the appropriate URL using the given 'Credentials'.
+delete :: Credentials -> Resource a -> IO ()
+delete creds res = do
+    tk <- getToken creds
+
+    req <- fmap (prepareRequest "DELETE" tk) (mkRequestForResource creds res)
+
+    manager <- newManager tlsManagerSettings
+    resp <- httpLbs req manager
+
+    print $ responseBody resp

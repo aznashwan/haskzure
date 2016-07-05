@@ -12,6 +12,7 @@
 
 {-# OPTIONS_HADDOCK show-extensions #-}
 {-# LANGUAGE CPP               #-}
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
@@ -21,24 +22,28 @@ module Cloud.Haskzure.Gen.Utils (
     mkEncodingOptions,
     recordFieldsInfo,
     mkDecodingOptions,
+    mkAzureResourceDecs,
     withDefaults
     ) where
 
 
-import           Control.Applicative        (empty)
-import           Data.Char                  (toLower, toUpper)
-import           Data.Monoid                ((<>))
+import           Control.Applicative               (empty)
+import           Data.Char                         (toLower, toUpper)
+import           Data.Maybe                        (fromJust, isJust)
+import           Data.Monoid                       ((<>))
 import           Language.Haskell.TH
-import           Language.Haskell.TH.Syntax (mkName, showName)
+import           Language.Haskell.TH.Syntax        (mkName, showName)
 #if MIN_VERSION_template_haskell(2,11,0)
-import           Language.Haskell.TH.Syntax (VarBangType)
+import           Language.Haskell.TH.Syntax        (VarBangType)
 #else
-import           Language.Haskell.TH.Syntax (VarStrictType)
+import           Language.Haskell.TH.Syntax        (VarStrictType)
 #endif
 
-import           Data.Aeson                 (Value (..), object, (.=))
-import           Data.Aeson.Types           (Options (..), Pair, Parser,
-                                             defaultTaggedObject)
+import           Data.Aeson                        (Value (..), object, (.=))
+import           Data.Aeson.Types                  (Options (..), Pair, Parser,
+                                                    defaultTaggedObject)
+
+import           Cloud.Haskzure.Core.AzureResource (AzureResource (..))
 
 -- | Example data used for reference:
 --
@@ -108,7 +113,6 @@ recordFieldsInfo f name = do
     return $ map f vbts
 #endif
 
-
 -- | Makes set of Aeson 'Options' for encoding datatypes.
 mkEncodingOptions :: Name -> Options
 mkEncodingOptions n = baseAesonOptions {
@@ -138,6 +142,13 @@ lowerFirst :: String -> String
 lowerFirst (x:xs) = toLower x : xs
 lowerFirst [] = []
 
+-- | looks up the given 'Name' or fails descriptively.
+lookupName :: Name -> Q Name
+lookupName name = (lookupValueName (showName name)) >>= \n ->
+                    case n of
+                      Just na -> return na
+                      Nothing -> fail $ "Unable to find name: " ++ (showName name)
+
 -- | Base Aeson Options used for encoding/decoding.
 baseAesonOptions :: Options
 baseAesonOptions =  Options {
@@ -160,3 +171,65 @@ withDefaults :: (Value -> Parser a) -> [Pair] -> Value -> Parser a
 withDefaults parser defs js@(Object _) = parser (js <+> object defs)
 withDefaults _ _ _ = empty
 
+-- (a -> m b) -> t a -> m (t b)
+-- ((Name, Name) -> Q [(Name, Name)]) -> [(Name, Name)] -> Q [(Name, Name)]
+
+-- | Creates the '[Dec]' for an 'AzureResource' instance declaration.
+mkAzureResourceDecs :: Name -> Q [Dec]
+mkAzureResourceDecs name = do
+    ps <- mkAzureResourceFieldPairs name
+    azrs <- mapM (lookupName . fst) ps
+    let pairs = zip azrs (map snd ps)
+
+    return $ map (\(azr, r) -> ValD (VarP azr) (NormalB (VarE r)) []) pairs
+
+-- | takes the name of the datastructure which is needed to be instantiated to
+-- 'AzureResource' and returns the list of pairs of 'Name's representing the
+-- AzureResource fields with their corresponding record field.
+-- ex: SomeData -> [(rID, someDataID) ...]
+mkAzureResourceFieldPairs :: Name -> Q [(Name, Name)]
+mkAzureResourceFieldPairs name = do
+    pref <- azureResourceFieldPrefix
+    fields <- azureResourceFieldNames
+
+    let adtfields =  map (\f -> ((lowerFirst . showName) (getBaseName name)) ++ (drop (length pref) f)) $ map showName fields
+    return $ zip fields $ map mkName adtfields
+
+
+-- | Some.Namespaced.Name -> Name
+getBaseNameStr :: String -> String
+getBaseNameStr = foldl (\name c -> if c == '.' then "" else name ++ [c]) ""
+
+-- | 'getBaseStr' applied to 'Name's.
+getBaseName :: Name -> Name
+getBaseName = mkName . getBaseNameStr . showName
+
+-- | The common prefix of all of the 'AzureResource' fields.
+azureResourceFieldPrefix :: Q String
+azureResourceFieldPrefix =
+    do
+        names <- fmap (map showName) azureResourceFieldNames
+        case names of
+          [] -> return ""
+          ns -> let nhds = map heads ns in
+                    return $ lastThat (\pref -> all (\nhd -> elem pref nhd) nhds) (nhds !! 1)
+  where heads = foldl (\ls x -> ls ++ [last ls ++ [x]]) [[]]
+        lastThat f = foldl (\c x -> if f x then x else c) ""
+
+
+-- | The names of the fields of the 'AzureResource' typeclass.
+azureResourceFieldNames :: Q [Name]
+azureResourceFieldNames = typeClassFieldNames ''AzureResource
+
+
+-- | 'typeClassFuncs' extracts the 'Name's of both the functions and values
+-- declared in the typeclass with the given 'Name'.
+typeClassFieldNames :: Name -> Q [Name]
+typeClassFieldNames cls =
+    reify cls >>= \c -> case c of
+        ClassI (ClassD _ _ _ _ decs) _ -> return $ ((map getBaseName) . getNames) decs
+        _ -> fail $ showName cls ++ " is not a class."
+
+   where getName (SigD n _) = Just n
+         getName _ = Nothing
+         getNames = (map fromJust) . (filter isJust) . (map getName)

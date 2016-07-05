@@ -20,29 +20,69 @@ module Cloud.Haskzure.Gen.Instances (
     toJSONInst,
     fromJSONInst,
     monoidInst,
-    mkAllInsts
+    azureResourceInst,
+    azureResourceInsts,
+    mkJSONInsts
     )where
 
-import           Data.Monoid                (Monoid (..))
-import           Data.String                (IsString (..))
-import           Language.Haskell.TH        (Dec, Q, conT, mkName)
-import           Language.Haskell.TH.Syntax (Exp (..), Lift (lift), Lit (..),
-                                             Name (..), OccName (..))
+import           Data.Monoid                       (Monoid (..))
+import           Data.String                       (IsString (..))
+import           Language.Haskell.TH
+import           Language.Haskell.TH.Syntax        (Exp (..), Lift (lift),
+                                                    Lit (..), Name (..),
+                                                    OccName (..))
 
-import           Data.Aeson                 (FromJSON (..), ToJSON (..), Value,
-                                             genericParseJSON,
-                                             genericToEncoding, genericToJSON)
-import           Data.Aeson.Types           (Parser)
-import           Generics.Deriving.Monoid   (mappenddefault, memptydefault)
+import           Data.Aeson                        (FromJSON (..), ToJSON (..),
+                                                    Value, genericParseJSON,
+                                                    genericToEncoding)
+import           Data.Aeson.Types                  (Parser)
+import           Generics.Deriving.Monoid          (mappenddefault,
+                                                    memptydefault)
 
+import           Cloud.Haskzure.Core.AzureResource (AzureResource (..))
 import           Cloud.Haskzure.Gen.Utils
 
 
 -- | Generates instances for 'ToJSON', 'FromJSON' and 'Monoid' provided a
 -- type which is an instance of 'GHC.Generics.Generic'.
 -- See 'toJSONInst', 'fromJSONInst' and 'monoidInst' for more details.
-mkAllInsts :: Name -> Q [Dec]
-mkAllInsts name = fmap concat $ mapM ($ name) [monoidInst, toJSONInst, fromJSONInst]
+mkJSONInsts :: Name -> Q [Dec]
+mkJSONInsts name = fmap concat $ mapM ($ name) [monoidInst, toJSONInst, fromJSONInst]
+
+-- | Generates an 'AzureResource' instance for the datatype provided by its
+-- 'Name'. The fields of the datatype have their names matched to the fields of
+-- 'AzureResource' by dropping the prefix which is the name of the datatype as
+-- opposed to the common field prefix in the names of the AzureResource fields.
+-- For Example:
+--
+-- @
+-- data SomeData = SomeData {
+--      someDataID :: String,
+--      someDataName :: String,
+--      someDataType :: String,
+--      someDataLocation :: String
+--  }
+--
+--
+-- instance AzureResource SomeData where
+--  rID = someDataID
+--  rName = someDataName
+--  rType = someDataType
+--  rLocation = someDataLocation
+-- @
+azureResourceInst :: Name -> Q [Dec]
+azureResourceInst name = do
+    decs <- mkAzureResourceDecs name
+    return [InstanceD Nothing []
+            (AppT (ConT ''AzureResource) (ConT name)) decs
+           ]
+
+-- | Generates 'Monoid', 'ToJSON', 'FromJSON', and 'AzureResource' instances
+-- for the datatype given by its name.
+-- For more details, see 'monoidInst', 'toJSONInst', 'fromJSONInst' and
+-- 'azureResourceInst' for more details.
+azureResourceInsts :: Name -> Q [Dec]
+azureResourceInsts name = fmap concat $ mapM ($ name) [mkJSONInsts, azureResourceInst]
 
 -- | Generates a 'ToJSON' instance provided a datatype given by its 'Name'.
 --

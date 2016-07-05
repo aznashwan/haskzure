@@ -13,10 +13,9 @@
 
 
 {-# OPTIONS_HADDOCK show-extensions, prune #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE MultiParamTypeClasses  #-}
-{-# LANGUAGE OverloadedStrings      #-}
-{-# LANGUAGE Trustworthy            #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE Trustworthy           #-}
 
 
 module Cloud.Haskzure.Core.AzureResource (
@@ -25,7 +24,6 @@ module Cloud.Haskzure.Core.AzureResource (
 
 
 import           Data.Aeson (FromJSON (..), ToJSON (..))
-import           Data.Text  (Text)
 
 
 -- The definition of  the AzureResource typeclass to which all Azure resource datatypes must comply.
@@ -34,23 +32,19 @@ import           Data.Text  (Text)
 -- | AzureResource is the typeclass to which all AzureResource
 -- resource datatypes must comply in order to be deployed.
 -- It should be directly serializable to/from JSON.
-class (ToJSON a, FromJSON a) => AzureResource r a | r -> a where
-  -- | rID returns the Text ID of the AzureResource:
+class (ToJSON r, FromJSON r) => AzureResource r where
+  -- | rID returns the String ID of the AzureResource:
   rID :: r    -- ^ the AzureResource instance.
-      -> Text -- ^ the String ID of the AzureResource.
+      -> String -- ^ the String ID of the AzureResource.
 
-  -- | rName returns the Text name of the AzureResource:
+  -- | rName returns the String name of the AzureResource:
   rName :: r    -- ^ the AzureResource instance.
-        -> Text -- ^ the String name of the AzureResource as present on Azure.
+        -> String -- ^ the String name of the AzureResource as present on Azure.
 
   -- | rLocation returns the normalized String location of the AzureResource:
   rLocation :: r    -- ^ the AzureResource instance.
-            -> Text -- ^ the String location of the AzureResource.
+            -> String -- ^ the String location of the AzureResource.
 
   -- | rType returns the String Type of the AzureResource in 'Provider/ResourceType' form:
   rType :: r    -- ^ the AzureResource instance.
-        -> Text -- ^ the String type of the AzureResource as present on Azure.
-
-  -- | rProperties returns the set of properties specific to this AzureResource:
-  rProperties :: r -- ^ the AzureResource instance.
-              -> a -- ^ the AzureResource's specific properties.
+        -> String -- ^ the String type of the AzureResource as present on Azure.

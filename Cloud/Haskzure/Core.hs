@@ -20,9 +20,10 @@ module Cloud.Haskzure.Core (
     -- ** Authentication data strutures and functions:
     Credentials(..),
     Token(..),
-    getToken
+    getToken, createOrUpdate, get, delete
   ) where
 
 import           Cloud.Haskzure.Core.Auth
 import           Cloud.Haskzure.Core.AzureResource
+import           Cloud.Haskzure.Core.Operations
 import           Cloud.Haskzure.Core.Resource
