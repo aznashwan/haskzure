@@ -14,6 +14,14 @@ module Cloud.Haskzure (
     -- * Core components:
     AzureResource(..),
 
+    -- * Authorization:
+    Credentials(..),
+    Token(..),
+    getToken,
+
+    -- * Oprations:
+    createOrUpdate, get, delete,
+
     -- * Instance Generation helpers and utilities:
     mkJSONInsts, azureResourceInsts, azureResourceInst, toJSONInst,
     fromJSONInst, monoidInst, recordFieldsInfo
